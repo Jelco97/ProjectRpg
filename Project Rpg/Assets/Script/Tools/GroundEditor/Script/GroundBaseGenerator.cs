@@ -1,0 +1,116 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class GroundBaseGenerator : MonoBehaviour
+{
+    public HeightGround HeightChecker;
+    public int Density = 1;
+    public int NumberTile = 10;
+
+    private Mesh mapMesh;
+
+    public void GenerateGroundBase()
+    {
+        #region Init
+        if (mapMesh != null)
+            DestroyImmediate(mapMesh);
+        mapMesh = new Mesh();
+
+        int numSideQuad = (Density * NumberTile) - Density;
+        int numVertice = (numSideQuad + 1) * (numSideQuad + 1);
+        int numTriangles = numSideQuad * numSideQuad * 2;
+
+        Vector3[] vertices = new Vector3[numVertice];
+        int[] triangle = new int[numTriangles * 3];
+        Vector2[] uv = new Vector2[numVertice];
+        Color[] vertexColor = new Color[numVertice];
+        #endregion
+
+        int index = 0;
+        for (float zPos = 0f; zPos < numSideQuad + 1; zPos++)
+            for (float xPos = 0f; xPos < numSideQuad + 1; xPos++)
+            {
+                Vector3 positionVertex = new Vector3();
+                positionVertex.z = (zPos / Density);
+                positionVertex.x = (xPos / Density);
+
+                int Xindex = Mathf.FloorToInt(xPos / Density);
+                if (Xindex == NumberTile -1)
+                    Xindex--;
+
+                int Zindex = Mathf.FloorToInt(zPos / Density);
+                if (Zindex == NumberTile -1)
+                    Zindex--;
+
+                float height = HeightChecker.HeightGroundData[Zindex].Row[Xindex];
+                positionVertex.y = height;
+                
+                vertexColor[index] = VertexColorByHeight(height);
+                uv[index] = new Vector2(xPos / (numSideQuad + 1), zPos / (numSideQuad + 1));  
+                vertices[index++] = positionVertex;
+            }
+
+        index = 0;
+        for (int z = 0; z < numSideQuad; z++)
+            for (int x = 0; x < numSideQuad; x++)
+            {
+                int vertexCounterPerLine = numSideQuad + 1;
+
+                triangle[index++] = x + z * vertexCounterPerLine;
+                triangle[index++] = x + (z + 1) * vertexCounterPerLine;
+                triangle[index++] = x + 1 + z * vertexCounterPerLine;
+
+                triangle[index++] = x + (z + 1) * vertexCounterPerLine;
+                triangle[index++] = x + 1 + (z + 1) * vertexCounterPerLine;
+                triangle[index++] = x + 1 + z * vertexCounterPerLine;
+            }
+
+        #region Mesh
+        mapMesh.vertices = vertices;
+        mapMesh.triangles = triangle;
+        mapMesh.uv = uv;
+        mapMesh.colors = vertexColor;
+
+        mapMesh.RecalculateNormals();
+        mapMesh.RecalculateBounds();
+
+        MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
+        if (meshFilter == null)
+            meshFilter = gameObject.AddComponent<MeshFilter>();
+        meshFilter.mesh = mapMesh;
+
+        MeshCollider meshCollider = gameObject.GetComponent<MeshCollider>();
+        if (meshCollider == null)
+            meshCollider = gameObject.AddComponent<MeshCollider>();
+        meshCollider.sharedMesh = mapMesh;
+
+        MeshRenderer meshRenderer = gameObject.GetComponent<MeshRenderer>();
+        if (meshRenderer == null)
+            meshRenderer = gameObject.AddComponent<MeshRenderer>();
+        #endregion
+    }
+
+    public void CleanHeightTab()
+    {
+        HeightChecker.CleanHeight();
+    }
+
+    public Color VertexColorByHeight(float Height)
+    {
+        if (Height == -3f)
+            return Color.white;
+        else if (Height == -2)
+            return Color.blue;
+        else if (Height == -1f)
+            return Color.yellow;
+        else if (Height == 0)
+            return Color.green;
+        else if (Height == 1f)
+            return Color.red;
+        else if (Height == 2)
+            return Color.black;
+        else
+            return Color.magenta;
+    }
+}

@@ -1,8 +1,12 @@
 using UnityEditor;
 using UnityEngine;
 
- public class GroundEditor : EditorWindow
+public class GroundEditor : EditorWindow
 {
+    #region Material
+    public Material CheckerMaterial;
+    #endregion
+
     #region GUIStyle
     GUIStyle header;
     GUIStyle subtitle;
@@ -17,13 +21,22 @@ using UnityEngine;
     #region Var
     ///Editor Skin
     private bool skinNewGround;
+    private bool skinCheckerVue;
 
     ///New Ground
-    string NameMap = "New Map";
-    int CheckerOnTheLenght;
-    int CheckerOnTheHeight;
-    int CellByLenghtChecker;
-    int CellDensity;
+    string nameMap = "New Map";
+    int checkerOnTheLenght = 4;
+    int checkerOnTheHeight = 4;
+    int cellByLenghtChecker = 10;
+    int cellDensity = 4;
+
+    ///Save
+    GameObject GroundFolder;
+    GameObject[] checker;
+
+    ///Tile vue
+    GameObject currentGround;
+
     #endregion
 
     void Awake()
@@ -52,20 +65,22 @@ using UnityEngine;
         ToolBarButton();
         GUILayout.EndHorizontal();
 
-        if(skinNewGround)
-        {
+        if (skinNewGround)
             NewGroundEditor();
-        }
+
+        else if (skinCheckerVue)
+            CheckerEditor();
+
     }
 
     #region Tool Bar
     void ToolBarButton()
     {
         Rect buttonRect = new Rect(3, 0, 50, 18);
-        if(GUI.Button(buttonRect, "File",EditorStyles.toolbarDropDown))
+        if (GUI.Button(buttonRect, "File", EditorStyles.toolbarDropDown))
         {
             GenericMenu toolsMenu = new GenericMenu();
-            toolsMenu.AddItem(new GUIContent("New"),false, NewGround);
+            toolsMenu.AddItem(new GUIContent("New"), false, NewGround);
             toolsMenu.AddItem(new GUIContent("Load"), false, LoadGround);
             toolsMenu.AddSeparator("");
             toolsMenu.AddItem(new GUIContent("Save"), false, SaveGround);
@@ -105,7 +120,7 @@ using UnityEngine;
         EditorGUI.DrawRect(backgroundRect, backgroundColor);
 
         Rect headerRect = new Rect(backgroundRect.x + 10, backgroundRect.y + 10, 430, 20);/////
-        GUI.Label(headerRect, "New Ground",header);
+        GUI.Label(headerRect, "New Ground", header);
 
         #region Map
         Rect subtitleRect = new Rect(headerRect.x + 20, headerRect.y + 30, 410, 20);/////
@@ -119,10 +134,10 @@ using UnityEngine;
         Rect labelRec = fieldBorderBackgroundRect;/////
         labelRec.y += 3;
         labelRec.x += 3;
-        GUI.Label(labelRec, "Map Name",field);
+        GUI.Label(labelRec, "Map Name", field);
         Rect fieldRect = fieldBackgroundRect;/////
         fieldRect.x += 3;
-        NameMap = EditorGUI.TextField(fieldRect, NameMap, field);
+        nameMap = EditorGUI.TextField(fieldRect, nameMap, field);
         #endregion
 
         #region Checker
@@ -137,9 +152,9 @@ using UnityEngine;
         labelRec.y += 60;
         GUI.Label(labelRec, "Checker on the lenght", field);
         fieldRect.y += 60;
-        CheckerOnTheLenght = EditorGUI.IntField(fieldRect, CheckerOnTheLenght, field);
-        CheckerOnTheLenght = Mathf.Min(CheckerOnTheLenght, 40);
-        CheckerOnTheLenght = Mathf.Max(CheckerOnTheLenght, 1);
+        checkerOnTheLenght = EditorGUI.IntField(fieldRect, checkerOnTheLenght, field);
+        checkerOnTheLenght = Mathf.Min(checkerOnTheLenght, 40);
+        checkerOnTheLenght = Mathf.Max(checkerOnTheLenght, 1);
 
         fieldBorderBackgroundRect.y += 30;
         EditorGUI.DrawRect(fieldBorderBackgroundRect, borderColor);
@@ -149,9 +164,9 @@ using UnityEngine;
         labelRec.y += 30;
         GUI.Label(labelRec, "Checker on the height", field);
         fieldRect.y += 30;
-        CheckerOnTheHeight = EditorGUI.IntField(fieldRect, CheckerOnTheHeight, field);
-        CheckerOnTheHeight = Mathf.Min(CheckerOnTheHeight, 40);
-        CheckerOnTheHeight = Mathf.Max(CheckerOnTheHeight, 1);
+        checkerOnTheHeight = EditorGUI.IntField(fieldRect, checkerOnTheHeight, field);
+        checkerOnTheHeight = Mathf.Min(checkerOnTheHeight, 40);
+        checkerOnTheHeight = Mathf.Max(checkerOnTheHeight, 1);
 
         fieldBorderBackgroundRect.y += 30;
         EditorGUI.DrawRect(fieldBorderBackgroundRect, borderColor);
@@ -161,9 +176,9 @@ using UnityEngine;
         labelRec.y += 30;
         GUI.Label(labelRec, "Cell by checker on the lenght", field);
         fieldRect.y += 30;
-        CellByLenghtChecker = EditorGUI.IntField(fieldRect, CellByLenghtChecker, field);
-        CellByLenghtChecker = Mathf.Min(CellByLenghtChecker, 50);
-        CellByLenghtChecker = Mathf.Max(CellByLenghtChecker, 5);
+        cellByLenghtChecker = EditorGUI.IntField(fieldRect, cellByLenghtChecker, field);
+        cellByLenghtChecker = Mathf.Min(cellByLenghtChecker, 50);
+        cellByLenghtChecker = Mathf.Max(cellByLenghtChecker, 5);
         #endregion
 
         #region Cell
@@ -178,42 +193,108 @@ using UnityEngine;
         labelRec.y += 60;
         GUI.Label(labelRec, "Cell Density", field);
         fieldRect.y += 60;
-        CellDensity = EditorGUI.IntField(fieldRect, CellDensity, field);
-        CellDensity = Mathf.Min(CheckerOnTheLenght, 10);
-        CellDensity = Mathf.Max(CheckerOnTheLenght, 1);
+        cellDensity = EditorGUI.IntField(fieldRect, cellDensity, field);
+        cellDensity = Mathf.Min(checkerOnTheLenght, 10);
+        cellDensity = Mathf.Max(checkerOnTheLenght, 1);
         #endregion
 
         #region Validation
         Rect validationButtonRect = new Rect(backgroundRect.x + 20, backgroundRect.y + backgroundRect.size.y - 50, 120, 30);/////
-        GUI.Button(validationButtonRect, "Cancel");
+        if (GUI.Button(validationButtonRect, "Cancel"))
+            skinNewGround = false;
         validationButtonRect.x += 290;
-        GUI.Button(validationButtonRect, "Creat");
+        if (GUI.Button(validationButtonRect, "Creat"))
+        {
+            CreatGround();
+            skinNewGround = false;
+            skinCheckerVue = true;
+        }
         #endregion
 
     }
 
-    void CancelNewGround()
+    void CheckerEditor()
     {
-        skinNewGround = false;
+        Rect buttonRect = ButtonRect(20, position.size.y - 28, 20);
+        buttonRect.y -= buttonRect.size.y;
+        int index = 0;
+
+        for (int y = checkerOnTheHeight; y > 0; y--)
+        {
+            if (y != checkerOnTheHeight)
+                buttonRect.y -= buttonRect.size.y + 5;
+
+            buttonRect.x = 20;
+
+            for (int x = 0; x < checkerOnTheLenght; x++)
+            {
+                if (x != 0)
+                    buttonRect.x += buttonRect.size.x + 5;
+                GUI.Button(buttonRect, "" + index);
+                index++;
+            }
+        }
+    }
+
+    void CellEditor()
+    {
+
     }
     #endregion
 
     #region Skin Constructor
-    Vector2 MidlePos(Vector2 SizeRect,bool yBorder = true)
+    Vector2 MidlePos(Vector2 SizeRect, bool yBorder = true)
     {
-        float xPos = (position.size.x / 2) - (SizeRect.x /2);
+        float xPos = (position.size.x / 2) - (SizeRect.x / 2);
         float yPos;
 
         if (yBorder)
-            yPos = ((position.size.y +18) / 2) - (SizeRect.y / 2);
+            yPos = ((position.size.y + 18) / 2) - (SizeRect.y / 2);
         else
-            yPos = (position.size.y / 2) - (SizeRect.y /2);
+            yPos = (position.size.y / 2) - (SizeRect.y / 2);
 
         return new Vector2(xPos, yPos);
+    }
+
+    Rect ButtonRect(float XPos, float YPos, float Margin)
+    {
+        float xSize = (position.size.x - (Margin * 2) - ((checkerOnTheLenght + 1) * 5)) / checkerOnTheLenght;
+        float ySize = (position.size.y - 18 - (Margin * 2) - ((checkerOnTheHeight + 1) * 5)) / checkerOnTheHeight;
+        return new Rect(XPos, YPos, xSize, ySize);
     }
     #endregion
 
     #region Ground
+    void CreatGround()
+    {
+        if (!GroundFolder)
+        {
+            GroundFolder = new GameObject();
+            GroundFolder.transform.position = Vector3.zero;
+            GroundFolder.name = "GroundFolder";
+        }
+        checker = new GameObject[checkerOnTheHeight * checkerOnTheLenght];
 
+        int index = 0;
+        for (int y = 0; y < checkerOnTheHeight; y++)
+            for (int x = 0; x < checkerOnTheLenght; x++)
+            {
+                checker[index] = new GameObject();
+                checker[index].transform.parent = GroundFolder.transform;
+                checker[index].name = "" + nameMap + " " + index;
+                GroundBaseGenerator groundScript = checker[index].AddComponent<GroundBaseGenerator>();
+
+                groundScript.NumberTile = cellByLenghtChecker;
+                groundScript.Density = cellDensity;
+                groundScript.HeightChecker = new HeightGround();
+                groundScript.HeightChecker.InitialisationRowArray(cellByLenghtChecker);
+
+                groundScript.GenerateGroundBase();
+
+                checker[index].transform.position = new Vector3(x * cellByLenghtChecker, 0, y * cellByLenghtChecker);
+                checker[index].GetComponent<MeshRenderer>().material = CheckerMaterial;
+                index++;
+            }
+    }
     #endregion
 }

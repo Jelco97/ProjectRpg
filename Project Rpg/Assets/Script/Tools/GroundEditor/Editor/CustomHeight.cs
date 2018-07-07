@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-[CustomPropertyDrawer(typeof(HeightGround))]
-public class CustomHeight : PropertyDrawer
-{
+//[CustomPropertyDrawer(typeof(HeightGround))]
+//public class CustomHeight : PropertyDrawer
+//{
 //    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
 //    {
 //        EditorGUI.PrefixLabel(position, label);
@@ -41,4 +41,4 @@ public class CustomHeight : PropertyDrawer
 //    {
 //        return 11 * 22;
 //    }
-}
+//}

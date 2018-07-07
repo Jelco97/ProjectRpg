@@ -1,2 +1,2 @@
 # ProjectRpg
-A personal project
+A personal Rpg project

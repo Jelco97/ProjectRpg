@@ -22,6 +22,7 @@ public class GroundEditor : EditorWindow
     ///Editor Skin
     private bool skinNewGround;
     private bool skinCheckerVue;
+    private bool skinCellVue;
 
     ///New Ground
     string nameMap = "New Map";
@@ -70,6 +71,9 @@ public class GroundEditor : EditorWindow
 
         else if (skinCheckerVue)
             CheckerEditor();
+
+        else if (skinCellVue)
+            CellEditor();
 
     }
 
@@ -230,7 +234,12 @@ public class GroundEditor : EditorWindow
             {
                 if (x != 0)
                     buttonRect.x += buttonRect.size.x + 5;
-                GUI.Button(buttonRect, "" + index);
+                if(GUI.Button(buttonRect, "" + index))
+                {
+                    skinCellVue = true;
+                    currentGround = checker[index];
+                    skinCheckerVue = false;
+                }
                 index++;
             }
         }
@@ -238,8 +247,26 @@ public class GroundEditor : EditorWindow
 
     void CellEditor()
     {
+        Rect verticalToolBar = new Rect(0, 18, 53, position.size.y);//////
+        EditorGUI.DrawRect(verticalToolBar, borderColor);
+        verticalToolBar = new Rect(0, 18, 50, position.size.y);
+        EditorGUI.DrawRect(verticalToolBar, backgroundColor);
+
+        Rect verticalToolBarButton = new Rect(5, 23, 40, 40);
+        if(GUI.Button(verticalToolBarButton, "Back"))
+        {
+            skinCheckerVue = true;
+            skinCellVue = false;
+        }
+
+        #region Cell
+        Rect cellButtonRect = new Rect();584654
+        #endregion
 
     }
+    #endregion
+
+    #region Cell
     #endregion
 
     #region Skin Constructor
@@ -275,6 +302,7 @@ public class GroundEditor : EditorWindow
         }
         checker = new GameObject[checkerOnTheHeight * checkerOnTheLenght];
 
+        int  cell = cellByLenghtChecker +1;
         int index = 0;
         for (int y = 0; y < checkerOnTheHeight; y++)
             for (int x = 0; x < checkerOnTheLenght; x++)
@@ -284,10 +312,10 @@ public class GroundEditor : EditorWindow
                 checker[index].name = "" + nameMap + " " + index;
                 GroundBaseGenerator groundScript = checker[index].AddComponent<GroundBaseGenerator>();
 
-                groundScript.NumberTile = cellByLenghtChecker;
+                groundScript.NumberTile = cell;
                 groundScript.Density = cellDensity;
                 groundScript.HeightChecker = new HeightGround();
-                groundScript.HeightChecker.InitialisationRowArray(cellByLenghtChecker);
+                groundScript.HeightChecker.InitialisationRowArray(cell);
 
                 groundScript.GenerateGroundBase();
 

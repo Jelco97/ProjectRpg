@@ -1,5 +1,7 @@
 using UnityEditor;
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 
 public class GroundEditor : EditorWindow
 {
@@ -19,6 +21,12 @@ public class GroundEditor : EditorWindow
     #endregion
 
     #region Var
+    ///Mouse
+    bool mouseClicked;
+
+    ///ToolBar
+    bool groundCreat;
+
     ///Editor Skin
     private bool skinNewGround;
     private bool skinCheckerVue;
@@ -38,6 +46,10 @@ public class GroundEditor : EditorWindow
 
     ///Tile vue
     GameObject currentGround;
+    List<Vector2> cellPaint = new List<Vector2>();
+    bool paintMode;
+    bool valueChoice;
+    float paintValue;
 
     #endregion
 
@@ -52,6 +64,7 @@ public class GroundEditor : EditorWindow
 
         field = new GUIStyle();
         field.fontSize = 10;
+
     }
 
     [MenuItem("Window/GroundEditor")]
@@ -63,6 +76,12 @@ public class GroundEditor : EditorWindow
 
     void OnGUI()
     {
+        Event currentEvent = Event.current;
+        if (currentEvent.type == EventType.MouseUp && currentEvent.button == 0 && mouseClicked)
+            mouseClicked = false;
+        else if (!mouseClicked && Event.current.type == EventType.MouseDown && Event.current.button == 0)
+            mouseClicked = true;
+
         GUILayout.BeginHorizontal(EditorStyles.toolbarButton);
         ToolBarButton();
         GUILayout.EndHorizontal();
@@ -95,6 +114,26 @@ public class GroundEditor : EditorWindow
 
             EditorGUIUtility.ExitGUI();
         }
+
+        EditorGUI.BeginDisabledGroup(!groundCreat);
+        buttonRect.x += 50;
+        if(GUI.Button(buttonRect,"Checker",EditorStyles.toolbarDropDown))
+        {
+
+        }
+
+        buttonRect.x += 50;
+        if (GUI.Button(buttonRect, "Cell", EditorStyles.toolbarDropDown))
+        {
+            GenericMenu toolsMenu = new GenericMenu();
+            toolsMenu.AddItem(new GUIContent("Clean"), false, CleanCurrentCell);
+
+            Rect dropDownRect = new Rect(103    , 3, 0, 16);
+            toolsMenu.DropDown(dropDownRect);
+
+            EditorGUIUtility.ExitGUI();
+        }
+        EditorGUI.EndDisabledGroup();
     }
 
     #region File
@@ -257,6 +296,7 @@ public class GroundEditor : EditorWindow
         Rect verticalToolBarButton = new Rect(5, 23, 40, 40);//////
         if (GUI.Button(verticalToolBarButton, "Back"))
         {
+            paintMode = false;
             skinCheckerVue = true;
             skinCellVue = false;
         }
@@ -268,9 +308,16 @@ public class GroundEditor : EditorWindow
         }
 
         verticalToolBarButton.y += 45;
-        if(GUI.Button(verticalToolBarButton,"Paint"))
+        if (!paintMode)
         {
-
+            if (GUI.Button(verticalToolBarButton, "Paint"))
+            {
+                paintMode = true;
+            }
+        }
+        else if (GUI.Button(verticalToolBarButton, "P"))
+        {
+            paintMode = false;
         }
 
 
@@ -293,14 +340,53 @@ public class GroundEditor : EditorWindow
 
             for (int x = 0; x < cellByLenghtChecker; x++)
             {
-                EditorGUI.DrawRect(cellButtonRect, backgroundColor);
 
-                currentHeightGround.HeightGroundData[Mathf.Abs(y - cellByLenghtChecker)].Row[x] =
-                    EditorGUI.FloatField(cellFieldRect, currentHeightGround.HeightGroundData[Mathf.Abs(y - cellByLenghtChecker)].Row[x], field);
+                if (!paintMode)
+                {
+                    EditorGUI.DrawRect(cellButtonRect, backgroundColor);
+                    currentHeightGround.HeightGroundData[Mathf.Abs(y - cellByLenghtChecker)].Row[x] =
+                        EditorGUI.FloatField(cellFieldRect, currentHeightGround.HeightGroundData[Mathf.Abs(y - cellByLenghtChecker)].Row[x], field);
+                }
+
+                if (paintMode)
+                {
+                    if (cellPaint.Contains(new Vector2(y, x)))
+                        EditorGUI.DrawRect(cellButtonRect, borderColor);
+                    else
+                        EditorGUI.DrawRect(cellButtonRect, backgroundColor);
+
+                    GUI.Label(cellFieldRect, "" + currentHeightGround.HeightGroundData[Mathf.Abs(y - cellByLenghtChecker)].Row[x], field);
+
+                    if (mouseClicked)
+                    {
+                        if (cellButtonRect.Contains(Event.current.mousePosition))
+                        {
+                            if (!valueChoice)
+                            {
+                                mouseClicked = true;
+                                valueChoice = true;
+                                paintValue = currentHeightGround.HeightGroundData[Mathf.Abs(y - cellByLenghtChecker)].Row[x];
+                                Debug.Log(paintValue);
+                            }
+                            else if (valueChoice && !cellPaint.Contains(new Vector2(y, x)))
+                            {
+                                cellPaint.Add(new Vector2(y, x));
+                                currentHeightGround.HeightGroundData[Mathf.Abs(y - cellByLenghtChecker)].Row[x] = paintValue;
+                                Repaint();
+                            }
+                        }
+                    }
+                    else if (!mouseClicked && valueChoice)
+                    {
+                        cellPaint.Clear();
+                        Repaint();
+                        valueChoice = false;
+                    }
+
+                }
 
                 cellButtonRect.x += cellButtonRect.size.x + 5;
                 cellFieldRect.x += cellButtonRect.size.x + 5;
-                //EditorGUI.IntField()
             }
         }
         #endregion
@@ -410,11 +496,20 @@ public class GroundEditor : EditorWindow
                 checker[index].GetComponent<MeshRenderer>().material = CheckerMaterial;
                 index++;
             }
+
+        groundCreat = true;
     }
 
     void RebuildCurrentChecker()
     {
         currentGround.GetComponent<GroundBaseGenerator>().GenerateGroundBase();
+    }
+
+    void CleanCurrentCell()
+    {
+        currentHeightGround.CleanHeight();
+        RebuildCurrentChecker();
+        Repaint();
     }
     #endregion
 }

@@ -34,6 +34,7 @@ public class GroundEditor : EditorWindow
     ///Save
     GameObject GroundFolder;
     GameObject[] checker;
+    HeightGround currentHeightGround;
 
     ///Tile vue
     GameObject currentGround;
@@ -219,7 +220,7 @@ public class GroundEditor : EditorWindow
 
     void CheckerEditor()
     {
-        Rect buttonRect = ButtonRect(20, position.size.y - 28, 20);
+        Rect buttonRect = ButtonRect(20, checkerOnTheLenght, position.size.y - 28, checkerOnTheHeight, 20);
         buttonRect.y -= buttonRect.size.y;
         int index = 0;
 
@@ -234,10 +235,11 @@ public class GroundEditor : EditorWindow
             {
                 if (x != 0)
                     buttonRect.x += buttonRect.size.x + 5;
-                if(GUI.Button(buttonRect, "" + index))
+                if (GUI.Button(buttonRect, "" + index))
                 {
                     skinCellVue = true;
                     currentGround = checker[index];
+                    currentHeightGround = currentGround.GetComponent<GroundBaseGenerator>().HeightChecker;
                     skinCheckerVue = false;
                 }
                 index++;
@@ -252,21 +254,58 @@ public class GroundEditor : EditorWindow
         verticalToolBar = new Rect(0, 18, 50, position.size.y);
         EditorGUI.DrawRect(verticalToolBar, backgroundColor);
 
-        Rect verticalToolBarButton = new Rect(5, 23, 40, 40);
-        if(GUI.Button(verticalToolBarButton, "Back"))
+        Rect verticalToolBarButton = new Rect(5, 23, 40, 40);//////
+        if (GUI.Button(verticalToolBarButton, "Back"))
         {
             skinCheckerVue = true;
             skinCellVue = false;
         }
 
+        verticalToolBarButton.y += 45;
+        if (GUI.Button(verticalToolBarButton, "Build"))
+        {
+            RebuildCurrentChecker();
+        }
+
+        verticalToolBarButton.y += 45;
+        if(GUI.Button(verticalToolBarButton,"Paint"))
+        {
+
+        }
+
+
         #region Cell
-        Rect cellButtonRect = new Rect();584654
+        Rect cellButtonRect = ButtonRect(70, cellByLenghtChecker, (position.size.y - 20), cellByLenghtChecker, 5, position.size.x - 70, position.size.y - 18);
+        cellButtonRect.y -= cellButtonRect.size.y;
+        Rect cellFieldRect = CenterPosRect(cellButtonRect);
+        float initialPosXCellFieldRect = cellFieldRect.x;
+
+        for (int y = cellByLenghtChecker; y > 0; y--)
+        {
+            cellButtonRect.x = 70;
+            cellFieldRect.x = initialPosXCellFieldRect;
+
+            if (y != cellByLenghtChecker)
+            {
+                cellButtonRect.y -= cellButtonRect.size.y + 5;
+                cellFieldRect.y -= cellButtonRect.size.y + 5;
+            }
+
+            for (int x = 0; x < cellByLenghtChecker; x++)
+            {
+                EditorGUI.DrawRect(cellButtonRect, backgroundColor);
+
+                currentHeightGround.HeightGroundData[Mathf.Abs(y - cellByLenghtChecker)].Row[x] =
+                    EditorGUI.FloatField(cellFieldRect, currentHeightGround.HeightGroundData[Mathf.Abs(y - cellByLenghtChecker)].Row[x], field);
+
+                cellButtonRect.x += cellButtonRect.size.x + 5;
+                cellFieldRect.x += cellButtonRect.size.x + 5;
+                //EditorGUI.IntField()
+            }
+        }
         #endregion
 
     }
-    #endregion
-
-    #region Cell
     #endregion
 
     #region Skin Constructor
@@ -283,11 +322,59 @@ public class GroundEditor : EditorWindow
         return new Vector2(xPos, yPos);
     }
 
-    Rect ButtonRect(float XPos, float YPos, float Margin)
+    /// <summary>
+    /// Creat a Rect with correct proportion
+    /// </summary>
+    /// <param name="XPos">X Position of the rect</param>
+    /// <param name="numberXCell"></param>
+    /// <param name="YPos">Y Position of the rect</param>
+    /// <param name="numberYCell"></param>
+    /// <param name="Margin">Margin in right and left</param>
+    /// <returns></returns>
+    Rect ButtonRect(float XPos, int numberXCell, float YPos, int numberYCell, float Margin, float SizeX = 0, float SizeY = 0)
     {
-        float xSize = (position.size.x - (Margin * 2) - ((checkerOnTheLenght + 1) * 5)) / checkerOnTheLenght;
-        float ySize = (position.size.y - 18 - (Margin * 2) - ((checkerOnTheHeight + 1) * 5)) / checkerOnTheHeight;
+        if (SizeX == 0)
+        {
+            SizeX = position.size.x;
+            SizeY = position.size.y;
+        }
+
+        float xSize = (SizeX - (Margin * 2) - ((numberXCell + 1) * 5)) / numberXCell;
+        float ySize = (SizeY - 18 - (Margin * 2) - ((numberYCell + 1) * 5)) / numberYCell;
         return new Rect(XPos, YPos, xSize, ySize);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="XPos">Current x Pos</param>
+    /// <param name="YPos">Current y Pos</param>
+    /// <param name="XSize">Current x Size</param>
+    /// <param name="YSize">Current y Size</param>
+    /// <param name="NewXSize">New x Size (10)</param>
+    /// <param name="NewYSize">New y Size (10)</param>
+    /// <returns></returns>
+    Rect CenterPosRect(float XPos, float YPos, float XSize, float YSize, float NewXSize = 10, float NewYSize = 10)
+    {
+        float xPos = ((XSize / 2) + XPos) - (NewXSize / 2);
+        float yPos = ((YSize / 2) + YPos) - (NewYSize / 2);
+
+        return new Rect(xPos, yPos, NewXSize, NewYSize);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="CurrentRect"></param>
+    /// <param name="NewXSize">New x Size (10)</param>
+    /// <param name="NewYSize">New y Size (10)</param>
+    /// <returns></returns>
+    Rect CenterPosRect(Rect CurrentRect, float NewXSize = 10, float NewYSize = 10)
+    {
+        float xPos = ((CurrentRect.size.x / 2) + CurrentRect.position.x) - (NewXSize / 2);
+        float yPos = ((CurrentRect.size.y / 2) + CurrentRect.position.y) - (NewYSize / 2);
+
+        return new Rect(xPos, yPos, NewXSize, NewYSize);
     }
     #endregion
 
@@ -302,7 +389,7 @@ public class GroundEditor : EditorWindow
         }
         checker = new GameObject[checkerOnTheHeight * checkerOnTheLenght];
 
-        int  cell = cellByLenghtChecker +1;
+        int cell = cellByLenghtChecker + 1;
         int index = 0;
         for (int y = 0; y < checkerOnTheHeight; y++)
             for (int x = 0; x < checkerOnTheLenght; x++)
@@ -323,6 +410,11 @@ public class GroundEditor : EditorWindow
                 checker[index].GetComponent<MeshRenderer>().material = CheckerMaterial;
                 index++;
             }
+    }
+
+    void RebuildCurrentChecker()
+    {
+        currentGround.GetComponent<GroundBaseGenerator>().GenerateGroundBase();
     }
     #endregion
 }

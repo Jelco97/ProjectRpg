@@ -31,6 +31,7 @@ public class GroundEditor : EditorWindow
     private bool skinNewGround;
     private bool skinCheckerVue;
     private bool skinCellVue;
+    private bool skinDataGround;
 
     ///New Ground
     string nameMap = "New Map";
@@ -41,8 +42,13 @@ public class GroundEditor : EditorWindow
 
     ///Save
     GameObject GroundFolder;
-    GameObject[] checker;
+    List<GameObject> checker = new List<GameObject>();
     HeightGround currentHeightGround;
+    string initNameMap;
+    int initCheckerOnTheLenght;
+    int initCheckerOnTheHeight;
+    int initCellByLenghtChecker;
+    int initCellDensity;
 
     ///Tile vue
     GameObject currentGround;
@@ -86,7 +92,7 @@ public class GroundEditor : EditorWindow
         ToolBarButton();
         GUILayout.EndHorizontal();
 
-        if (skinNewGround)
+        if (skinNewGround || skinDataGround)
             NewGroundEditor();
 
         else if (skinCheckerVue)
@@ -117,9 +123,15 @@ public class GroundEditor : EditorWindow
 
         EditorGUI.BeginDisabledGroup(!groundCreat);
         buttonRect.x += 50;
-        if(GUI.Button(buttonRect,"Checker",EditorStyles.toolbarDropDown))
+        if (GUI.Button(buttonRect, "Checker", EditorStyles.toolbarDropDown))
         {
+            GenericMenu toolsMenu = new GenericMenu();
+            toolsMenu.AddItem(new GUIContent("Ground Data"), false, GroundData);
 
+            Rect dropDownRect = new Rect(53, 3, 0, 16);
+            toolsMenu.DropDown(dropDownRect);
+
+            EditorGUIUtility.ExitGUI();
         }
 
         buttonRect.x += 50;
@@ -128,7 +140,7 @@ public class GroundEditor : EditorWindow
             GenericMenu toolsMenu = new GenericMenu();
             toolsMenu.AddItem(new GUIContent("Clean"), false, CleanCurrentCell);
 
-            Rect dropDownRect = new Rect(103    , 3, 0, 16);
+            Rect dropDownRect = new Rect(103, 3, 0, 16);
             toolsMenu.DropDown(dropDownRect);
 
             EditorGUIUtility.ExitGUI();
@@ -153,6 +165,30 @@ public class GroundEditor : EditorWindow
     }
     #endregion
 
+    #region Checker
+    void GroundData()
+    {
+        initNameMap = nameMap;
+        initCheckerOnTheLenght = checkerOnTheLenght;
+        initCheckerOnTheHeight = checkerOnTheHeight;
+        initCellByLenghtChecker = cellByLenghtChecker;
+        initCellDensity = cellDensity;
+
+        skinDataGround = true;
+    }
+
+    void CancelGroundData()
+    {
+        nameMap = initNameMap;
+        checkerOnTheLenght = initCheckerOnTheLenght;
+        checkerOnTheHeight = initCheckerOnTheHeight;
+        cellByLenghtChecker = initCellByLenghtChecker;
+        cellDensity = initCellDensity;
+
+        skinDataGround = false;
+    }
+    #endregion
+
     #endregion
 
     #region Skin
@@ -164,7 +200,10 @@ public class GroundEditor : EditorWindow
         EditorGUI.DrawRect(backgroundRect, backgroundColor);
 
         Rect headerRect = new Rect(backgroundRect.x + 10, backgroundRect.y + 10, 430, 20);/////
-        GUI.Label(headerRect, "New Ground", header);
+        if (skinDataGround)
+            GUI.Label(headerRect, "Ground Data", header);
+        else
+            GUI.Label(headerRect, "New Ground", header);
 
         #region Map
         Rect subtitleRect = new Rect(headerRect.x + 20, headerRect.y + 30, 410, 20);/////
@@ -196,7 +235,10 @@ public class GroundEditor : EditorWindow
         labelRec.y += 60;
         GUI.Label(labelRec, "Checker on the lenght", field);
         fieldRect.y += 60;
-        checkerOnTheLenght = EditorGUI.IntField(fieldRect, checkerOnTheLenght, field);
+        if (skinDataGround)
+            GUI.Label(fieldRect, "" + checkerOnTheLenght, field);
+        else
+            checkerOnTheLenght = EditorGUI.IntField(fieldRect, checkerOnTheLenght, field);
         checkerOnTheLenght = Mathf.Min(checkerOnTheLenght, 40);
         checkerOnTheLenght = Mathf.Max(checkerOnTheLenght, 1);
 
@@ -208,7 +250,10 @@ public class GroundEditor : EditorWindow
         labelRec.y += 30;
         GUI.Label(labelRec, "Checker on the height", field);
         fieldRect.y += 30;
-        checkerOnTheHeight = EditorGUI.IntField(fieldRect, checkerOnTheHeight, field);
+        if (skinDataGround)
+            GUI.Label(fieldRect, "" + checkerOnTheHeight, field);
+        else
+            checkerOnTheHeight = EditorGUI.IntField(fieldRect, checkerOnTheHeight, field);
         checkerOnTheHeight = Mathf.Min(checkerOnTheHeight, 40);
         checkerOnTheHeight = Mathf.Max(checkerOnTheHeight, 1);
 
@@ -244,14 +289,31 @@ public class GroundEditor : EditorWindow
 
         #region Validation
         Rect validationButtonRect = new Rect(backgroundRect.x + 20, backgroundRect.y + backgroundRect.size.y - 50, 120, 30);/////
-        if (GUI.Button(validationButtonRect, "Cancel"))
-            skinNewGround = false;
-        validationButtonRect.x += 290;
-        if (GUI.Button(validationButtonRect, "Creat"))
+
+        if (!skinDataGround)
         {
-            CreatGround();
-            skinNewGround = false;
-            skinCheckerVue = true;
+            if (GUI.Button(validationButtonRect, "Cancel"))
+                skinNewGround = false;
+            validationButtonRect.x += 290;
+            if (GUI.Button(validationButtonRect, "Creat"))
+            {
+                CreatGround();
+                skinNewGround = false;
+                skinCheckerVue = true;
+            }
+        }
+        else
+        {
+            if (GUI.Button(validationButtonRect, "Cancel"))
+                CancelGroundData();
+            validationButtonRect.x += 290;
+            if (GUI.Button(validationButtonRect, "Rebuild"))
+            {
+                RebuildGround();
+                skinNewGround = false;
+                skinDataGround = false;
+                skinCheckerVue = true;
+            }
         }
         #endregion
 
@@ -473,19 +535,18 @@ public class GroundEditor : EditorWindow
             GroundFolder.transform.position = Vector3.zero;
             GroundFolder.name = "GroundFolder";
         }
-        checker = new GameObject[checkerOnTheHeight * checkerOnTheLenght];
 
         int cell = cellByLenghtChecker + 1;
         int index = 0;
         for (int y = 0; y < checkerOnTheHeight; y++)
             for (int x = 0; x < checkerOnTheLenght; x++)
             {
-                checker[index] = new GameObject();
+                checker.Add(new GameObject());
                 checker[index].transform.parent = GroundFolder.transform;
                 checker[index].name = "" + nameMap + " " + index;
                 GroundBaseGenerator groundScript = checker[index].AddComponent<GroundBaseGenerator>();
 
-                groundScript.NumberTile = cell;
+                groundScript.NumberCellByLenght = cell;
                 groundScript.Density = cellDensity;
                 groundScript.HeightChecker = new HeightGround();
                 groundScript.HeightChecker.InitialisationRowArray(cell);
@@ -510,6 +571,51 @@ public class GroundEditor : EditorWindow
         currentHeightGround.CleanHeight();
         RebuildCurrentChecker();
         Repaint();
+    }
+
+    void RebuildGround()
+    {
+        foreach (GameObject obj in checker)
+        {
+            GroundBaseGenerator script = obj.GetComponent<GroundBaseGenerator>();
+            script.NumberCellByLenght = cellByLenghtChecker;
+            script.Density = cellDensity;
+            script.HeightChecker.NewRowArray(cellByLenghtChecker);
+            script.GenerateGroundBase();
+        }
+
+        int index = 0;
+        for (int y = 0; y < checkerOnTheHeight; y++)
+        {
+            for (int x = 0; x < checkerOnTheLenght; x++)
+            {
+                checker[index].transform.position = new Vector3(x * (cellByLenghtChecker -1), 0, y * (cellByLenghtChecker-1));
+                index++;
+            }
+        }
+        //int newNumberCheckerIncreaseOnTheLenght = checkerOnTheLenght - initCheckerOnTheLenght;//4 - 2
+        //int indexCheckerOnTheHeightPos = initCheckerOnTheLenght;//2
+        //
+        //if (newNumberCheckerIncreaseOnTheLenght > 0)
+        //{
+        //    for (int x = 0; x < checkerOnTheHeight -1; x++)
+        //    {
+        //        if (x != 0)
+        //            indexCheckerOnTheHeightPos += indexCheckerOnTheHeightPos + newNumberCheckerIncreaseOnTheLenght;
+        //
+        //        for (int i = 0; i < newNumberCheckerIncreaseOnTheLenght; i++)
+        //        {
+        //            checker.Insert(indexCheckerOnTheHeightPos + i, new GameObject());
+        //            GameObject newChecker = checker[indexCheckerOnTheHeightPos + i];
+        //
+        //            GroundBaseGenerator script = newChecker.AddComponent<GroundBaseGenerator>();
+        //            script.NumberCellByLenght = cellByLenghtChecker;
+        //            script.Density = cellDensity;
+        //            script.HeightChecker.NewRowArray(cellByLenghtChecker);
+        //            script.GenerateGroundBase();
+        //        }
+        //    }
+        //}
     }
     #endregion
 }

@@ -6,7 +6,7 @@ public class GroundBaseGenerator : MonoBehaviour
 {
     public HeightGround HeightChecker;
     public int Density = 1;
-    public int NumberTile = 10;
+    public int NumberCellByLenght = 10;
 
     private Mesh mapMesh;
 
@@ -17,7 +17,7 @@ public class GroundBaseGenerator : MonoBehaviour
             DestroyImmediate(mapMesh);
         mapMesh = new Mesh();
 
-        int numSideQuad = (Density * NumberTile) - Density;
+        int numSideQuad = (Density * NumberCellByLenght) - Density;
         int numVertice = (numSideQuad + 1) * (numSideQuad + 1);
         int numTriangles = numSideQuad * numSideQuad * 2;
 
@@ -36,11 +36,11 @@ public class GroundBaseGenerator : MonoBehaviour
                 positionVertex.x = (xPos / Density);
 
                 int Xindex = Mathf.FloorToInt(xPos / Density);
-                if (Xindex == NumberTile -1)
+                if (Xindex == NumberCellByLenght -1)
                     Xindex--;
 
                 int Zindex = Mathf.FloorToInt(zPos / Density);
-                if (Zindex == NumberTile -1)
+                if (Zindex == NumberCellByLenght -1)
                     Zindex--;
 
                 float height = HeightChecker.HeightGroundData[Zindex].Row[Xindex];

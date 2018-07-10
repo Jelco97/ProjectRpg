@@ -29,6 +29,10 @@ public class HeightGround
             HeightGroundData[x].Row = new float[size];
     }
 
+    /// <summary>
+    /// Add or remove ellement of array
+    /// </summary>
+    /// <param name="i"></param>
     public void NewRowArray(int i)
     {
         int maxIndex = HeightGroundData.Length;

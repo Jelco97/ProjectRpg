@@ -6,9 +6,11 @@ using UnityEngine;
 public class MapDataSave : ScriptableObject {
 
     public string NameMap;
-    public GameObject GroundFolder;
     public int CheckerOnTheLenght;
     public int CheckerOnTheHeight;
-    public int CellBychecker;
-    public GameObject[] Checker;
+    public int CellByLenghtChecker;
+    public int Density;
+    //public GameObject GroundFolder;
+    public List<GameObject> Checker;
+    public List<HeightGround> Height;
 }

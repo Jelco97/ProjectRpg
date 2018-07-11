@@ -32,7 +32,7 @@ public class HeightGround
     /// <summary>
     /// Add or remove ellement of array
     /// </summary>
-    /// <param name="i"></param>
+    /// <param name="i">New size</param>
     public void NewRowArray(int i)
     {
         int maxIndex = HeightGroundData.Length;

@@ -156,7 +156,7 @@ public class GroundEditor : EditorWindow
 
     void LoadGround()
     {
-
+        Debug.Log(checker.Count);
     }
 
     void SaveGround()
@@ -235,10 +235,10 @@ public class GroundEditor : EditorWindow
         labelRec.y += 60;
         GUI.Label(labelRec, "Checker on the lenght", field);
         fieldRect.y += 60;
-        if (skinDataGround)
-            GUI.Label(fieldRect, "" + checkerOnTheLenght, field);
-        else
-            checkerOnTheLenght = EditorGUI.IntField(fieldRect, checkerOnTheLenght, field);
+        //if (skinDataGround)
+        //    GUI.Label(fieldRect, "" + checkerOnTheLenght, field);
+        //else
+        checkerOnTheLenght = EditorGUI.IntField(fieldRect, checkerOnTheLenght, field);
         checkerOnTheLenght = Mathf.Min(checkerOnTheLenght, 40);
         checkerOnTheLenght = Mathf.Max(checkerOnTheLenght, 1);
 
@@ -250,10 +250,10 @@ public class GroundEditor : EditorWindow
         labelRec.y += 30;
         GUI.Label(labelRec, "Checker on the height", field);
         fieldRect.y += 30;
-        if (skinDataGround)
-            GUI.Label(fieldRect, "" + checkerOnTheHeight, field);
-        else
-            checkerOnTheHeight = EditorGUI.IntField(fieldRect, checkerOnTheHeight, field);
+        //if (skinDataGround)
+        //    GUI.Label(fieldRect, "" + checkerOnTheHeight, field);
+        //else
+        checkerOnTheHeight = EditorGUI.IntField(fieldRect, checkerOnTheHeight, field);
         checkerOnTheHeight = Mathf.Min(checkerOnTheHeight, 40);
         checkerOnTheHeight = Mathf.Max(checkerOnTheHeight, 1);
 
@@ -283,8 +283,8 @@ public class GroundEditor : EditorWindow
         GUI.Label(labelRec, "Cell Density", field);
         fieldRect.y += 60;
         cellDensity = EditorGUI.IntField(fieldRect, cellDensity, field);
-        cellDensity = Mathf.Min(checkerOnTheLenght, 10);
-        cellDensity = Mathf.Max(checkerOnTheLenght, 1);
+        cellDensity = Mathf.Min(cellDensity, 10);
+        cellDensity = Mathf.Max(cellDensity, 1);
         #endregion
 
         #region Validation
@@ -575,6 +575,7 @@ public class GroundEditor : EditorWindow
 
     void RebuildGround()
     {
+        #region Cell
         foreach (GameObject obj in checker)
         {
             GroundBaseGenerator script = obj.GetComponent<GroundBaseGenerator>();
@@ -583,39 +584,114 @@ public class GroundEditor : EditorWindow
             script.HeightChecker.NewRowArray(cellByLenghtChecker);
             script.GenerateGroundBase();
         }
+        #endregion
 
+        int newNumberCheckerIncreaseOnTheLenght = checkerOnTheLenght - initCheckerOnTheLenght;//2-4
+
+        if (newNumberCheckerIncreaseOnTheLenght > 0)
+        {
+            Debug.Log("Lenght");
+            int indexCheckerOnTheLenghtPos = initCheckerOnTheLenght;//2
+
+            for (int y = 0; y < initCheckerOnTheHeight; y++)
+            {
+                if (y != 0)
+                    indexCheckerOnTheLenghtPos += initCheckerOnTheLenght + newNumberCheckerIncreaseOnTheLenght;
+
+                for (int x = 0; x < newNumberCheckerIncreaseOnTheLenght; x++)
+                {
+                    checker.Insert(indexCheckerOnTheLenghtPos + x, new GameObject());
+                    GameObject newChecker = checker[indexCheckerOnTheLenghtPos + x];
+                    newChecker.transform.parent = GroundFolder.transform;
+                    newChecker.name = "Extended Checker" + (indexCheckerOnTheLenghtPos + x);
+
+                    GroundBaseGenerator script = newChecker.AddComponent<GroundBaseGenerator>();
+                    script.NumberCellByLenght = cellByLenghtChecker;
+                    script.Density = cellDensity;
+                    script.HeightChecker = new HeightGround();
+                    script.HeightChecker.InitialisationRowArray(cellByLenghtChecker);
+                    script.GenerateGroundBase();
+
+                    newChecker.GetComponent<MeshRenderer>().material = CheckerMaterial;
+                }
+            }
+        }
+
+        else
+        {
+            int absNewNumberCheckerIncreaseOnTheLenght = Mathf.Abs(newNumberCheckerIncreaseOnTheLenght);
+            int initialSizeArrayChecker = checker.Count;
+
+            for (int y = 0; y < initCheckerOnTheHeight; y++)
+            {
+                if(y !=0)
+                {
+                    initialSizeArrayChecker -= checkerOnTheLenght;
+                }
+
+                for(int x = 0; x < absNewNumberCheckerIncreaseOnTheLenght; x++)
+                {
+                    initialSizeArrayChecker -= 1;
+                    DestroyImmediate(checker[initialSizeArrayChecker]);
+                    checker.RemoveAt(initialSizeArrayChecker);
+
+                }
+            }
+        }
+
+        int newNumberCheckerIncreaseOnTheHeight = checkerOnTheHeight - initCheckerOnTheHeight;//2-4
+
+        if (newNumberCheckerIncreaseOnTheHeight > 0)
+        {
+            Debug.Log("Height");
+            for (int y = 0; y < newNumberCheckerIncreaseOnTheHeight; y++)
+            {
+                for (int x = 0; x < checkerOnTheLenght; x++)
+                {
+                    checker.Add(new GameObject());
+
+                    GameObject newChecker = checker[checker.Count - 1];
+                    newChecker.transform.parent = GroundFolder.transform;
+                    newChecker.name = "Extended Checker" + checker.Count;
+
+                    GroundBaseGenerator script = newChecker.AddComponent<GroundBaseGenerator>();
+                    script.NumberCellByLenght = cellByLenghtChecker;
+                    script.Density = cellDensity;
+                    script.HeightChecker = new HeightGround();
+                    script.HeightChecker.InitialisationRowArray(cellByLenghtChecker);
+                    script.GenerateGroundBase();
+
+                    newChecker.GetComponent<MeshRenderer>().material = CheckerMaterial;
+                }
+            }
+        }
+
+        else
+        {
+            int absNewNumberCheckerIncreaseOnTheHeight = Mathf.Abs(newNumberCheckerIncreaseOnTheHeight);
+            for (int y = 0; y < absNewNumberCheckerIncreaseOnTheHeight; y++)
+            {
+                for(int x = 0; x < checkerOnTheLenght;x++)
+                {
+                    DestroyImmediate(checker[checker.Count - 1]);
+                    checker.RemoveAt(checker.Count - 1);
+                }
+            }
+        }
+        
+
+        #region Placement
         int index = 0;
         for (int y = 0; y < checkerOnTheHeight; y++)
         {
             for (int x = 0; x < checkerOnTheLenght; x++)
             {
-                checker[index].transform.position = new Vector3(x * (cellByLenghtChecker -1), 0, y * (cellByLenghtChecker-1));
+                checker[index].transform.position = new Vector3(x * (cellByLenghtChecker - 1), 0, y * (cellByLenghtChecker - 1));
                 index++;
             }
         }
-        //int newNumberCheckerIncreaseOnTheLenght = checkerOnTheLenght - initCheckerOnTheLenght;//4 - 2
-        //int indexCheckerOnTheHeightPos = initCheckerOnTheLenght;//2
-        //
-        //if (newNumberCheckerIncreaseOnTheLenght > 0)
-        //{
-        //    for (int x = 0; x < checkerOnTheHeight -1; x++)
-        //    {
-        //        if (x != 0)
-        //            indexCheckerOnTheHeightPos += indexCheckerOnTheHeightPos + newNumberCheckerIncreaseOnTheLenght;
-        //
-        //        for (int i = 0; i < newNumberCheckerIncreaseOnTheLenght; i++)
-        //        {
-        //            checker.Insert(indexCheckerOnTheHeightPos + i, new GameObject());
-        //            GameObject newChecker = checker[indexCheckerOnTheHeightPos + i];
-        //
-        //            GroundBaseGenerator script = newChecker.AddComponent<GroundBaseGenerator>();
-        //            script.NumberCellByLenght = cellByLenghtChecker;
-        //            script.Density = cellDensity;
-        //            script.HeightChecker.NewRowArray(cellByLenghtChecker);
-        //            script.GenerateGroundBase();
-        //        }
-        //    }
-        //}
+        #endregion
     }
+
     #endregion
 }

@@ -28,12 +28,14 @@ public class GroundEditor : EditorWindow
     bool groundCreat;
 
     ///Editor Skin
-    private bool skinNewGround;
+    private bool skinNewGroundVue;
     private bool skinCheckerVue;
     private bool skinCellVue;
-    private bool skinDataGround;
-    private bool skinLoadGround;
+    private bool skinDataGroundVue;
+    private bool skinLoadGroundVue;
     private bool skinLoadAndCreatGround;
+    private bool skinFlattenVue;
+    private bool skinFlattenAllVue;
 
     ///New Ground
     string nameMap = "New Map";
@@ -61,6 +63,9 @@ public class GroundEditor : EditorWindow
     bool paintMode;
     bool valueChoice;
     float paintValue;
+
+    /// Cell
+    float flattenCellValueCheckboard;    
 
     #endregion
 
@@ -96,17 +101,21 @@ public class GroundEditor : EditorWindow
         ToolBarButton();
         GUILayout.EndHorizontal();
 
-        if (skinNewGround || skinDataGround)
+        if (skinNewGroundVue || skinDataGroundVue)
             NewGroundEditor();
 
-        else if (skinLoadGround)
+        else if (skinLoadGroundVue)
             LoadGroundEditor();
+
+        else if (skinFlattenVue || skinFlattenAllVue)
+            FlattenEditor();
 
         else if (skinCheckerVue)
             CheckerEditor();
 
         else if (skinCellVue)
             CellEditor();
+
 
     }
 
@@ -129,48 +138,62 @@ public class GroundEditor : EditorWindow
             EditorGUIUtility.ExitGUI();
         }
 
+
         EditorGUI.BeginDisabledGroup(!groundCreat);
         buttonRect.x += 50;
+        buttonRect.size = new Vector2(70, buttonRect.size.y);
         if (GUI.Button(buttonRect, "Checker", EditorStyles.toolbarDropDown))
         {
             GenericMenu toolsMenu = new GenericMenu();
             toolsMenu.AddItem(new GUIContent("Ground Data"), false, GroundData);
+            toolsMenu.AddItem(new GUIContent("Rebuild All"), false, RebuildAll);
+            toolsMenu.AddSeparator("");
+            toolsMenu.AddItem(new GUIContent("Flatten All"), false, FlattenAllCellVue); 
 
-            Rect dropDownRect = new Rect(53, 3, 0, 16);
+             Rect dropDownRect = new Rect(53, 3, 0, 16);
             toolsMenu.DropDown(dropDownRect);
 
             EditorGUIUtility.ExitGUI();
         }
 
-        buttonRect.x += 50;
+        EditorGUI.BeginDisabledGroup(!skinCellVue);
+        buttonRect.x += 70;
+        buttonRect.size = new Vector2(50, buttonRect.size.y);
         if (GUI.Button(buttonRect, "Cell", EditorStyles.toolbarDropDown))
         {
             GenericMenu toolsMenu = new GenericMenu();
             toolsMenu.AddItem(new GUIContent("Clean"), false, CleanCurrentCell);
+            toolsMenu.AddSeparator("");
+            toolsMenu.AddItem(new GUIContent("Flatten"), false, FlattenVueEditor);
 
-            Rect dropDownRect = new Rect(103, 3, 0, 16);
+            Rect dropDownRect = new Rect(123, 3, 0, 16);
             toolsMenu.DropDown(dropDownRect);
 
             EditorGUIUtility.ExitGUI();
         }
+        EditorGUI.EndDisabledGroup();
         EditorGUI.EndDisabledGroup();
     }
 
     #region File
     void NewGround()
     {
-        skinNewGround = true;
+        skinNewGroundVue = true;
+        skinDataGroundVue = false;
+        Repaint();
     }
 
     void LoadGround()
     {
-        skinLoadGround = true;
+        skinLoadGroundVue = true;
+        Repaint();
     }
 
     void LoadAndCreatGround()
     {
         skinLoadAndCreatGround = true;
-        skinLoadGround = true;
+        skinLoadGroundVue = true;
+        Repaint();
     }
 
     void SaveGround()
@@ -190,10 +213,17 @@ public class GroundEditor : EditorWindow
         currentMapDataSave.Density = cellDensity;
         //currentMapDataSave.GroundFolder = groundFolder;
         currentMapDataSave.Checker = checker;
+
+        height.Clear();
+        foreach (GameObject obj in checker)
+            height.Add(obj.GetComponent<GroundBaseGenerator>().HeightChecker);
+
         currentMapDataSave.Height = height;
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
+
+        Repaint();
     }
     #endregion
 
@@ -206,7 +236,9 @@ public class GroundEditor : EditorWindow
         initCellByLenghtChecker = cellByLenghtChecker;
         initCellDensity = cellDensity;
 
-        skinDataGround = true;
+        skinFlattenVue = false;
+        skinFlattenAllVue = false;
+        skinDataGroundVue = true;
     }
 
     void CancelGroundData()
@@ -217,10 +249,23 @@ public class GroundEditor : EditorWindow
         cellByLenghtChecker = initCellByLenghtChecker;
         cellDensity = initCellDensity;
 
-        skinDataGround = false;
+        skinDataGroundVue = false;
     }
+
+    void FlattenAllCellVue()
+    {
+        skinFlattenVue = false;
+        skinFlattenAllVue = true;
+    }
+
     #endregion
 
+    #region cell
+    void FlattenVueEditor()
+    {
+        skinFlattenVue = true;
+    }
+    #endregion
     #endregion
 
     #region Skin
@@ -232,7 +277,7 @@ public class GroundEditor : EditorWindow
         EditorGUI.DrawRect(backgroundRect, backgroundColor);
 
         Rect headerRect = new Rect(backgroundRect.x + 10, backgroundRect.y + 10, 430, 20);/////
-        if (skinDataGround)
+        if (skinDataGroundVue)
             GUI.Label(headerRect, "Ground Data", header);
         else
             GUI.Label(headerRect, "New Ground", header);
@@ -322,15 +367,15 @@ public class GroundEditor : EditorWindow
         #region Validation
         Rect validationButtonRect = new Rect(backgroundRect.x + 20, backgroundRect.y + backgroundRect.size.y - 50, 120, 30);/////
 
-        if (!skinDataGround)
+        if (!skinDataGroundVue)
         {
             if (GUI.Button(validationButtonRect, "Cancel"))
-                skinNewGround = false;
+                skinNewGroundVue = false;
             validationButtonRect.x += 290;
             if (GUI.Button(validationButtonRect, "Creat"))
             {
                 CreatGround();
-                skinNewGround = false;
+                skinNewGroundVue = false;
                 skinCheckerVue = true;
             }
         }
@@ -342,8 +387,8 @@ public class GroundEditor : EditorWindow
             if (GUI.Button(validationButtonRect, "Rebuild"))
             {
                 RebuildGround();
-                skinNewGround = false;
-                skinDataGround = false;
+                skinNewGroundVue = false;
+                skinDataGroundVue = false;
                 skinCheckerVue = true;
             }
         }
@@ -378,7 +423,7 @@ public class GroundEditor : EditorWindow
         Rect buttonRect = new Rect(backgroundRect.x + 30, backgroundRect.y + 75, 100, 30);
         if (GUI.Button(buttonRect, "Cancel"))
         {
-            skinLoadGround = false;
+            skinLoadGroundVue = false;
         }
 
         buttonRect.x += 240;
@@ -429,7 +474,7 @@ public class GroundEditor : EditorWindow
             {
                 groundCreat = true;
                 skinCheckerVue = true;
-                skinLoadGround = false;
+                skinLoadGroundVue = false;
                 skinLoadAndCreatGround = false;
             }
         }
@@ -570,6 +615,52 @@ public class GroundEditor : EditorWindow
         #endregion
 
     }
+
+    void FlattenEditor()
+    {
+        Rect backgroundBorderRect = new Rect(MidlePos(new Vector2(306, 156)), new Vector2(306, 156));
+        EditorGUI.DrawRect(backgroundBorderRect, borderColor);
+
+        Rect backgroundRect = new Rect(MidlePos(new Vector2(300, 150)), new Vector2(300, 150));
+        EditorGUI.DrawRect(backgroundRect, backgroundColor);
+
+        Rect labelRect = new Rect(backgroundRect);
+        labelRect.x += 20;
+        labelRect.y += 10;
+        GUI.Label(labelRect, "flatten Editor", subtitle);
+        
+        Rect borderFielRect = new Rect(labelRect.x + 20, labelRect.y + 30, labelRect.size.x -80, 20);
+        EditorGUI.DrawRect(borderFielRect, borderColor);
+        
+        Rect backgroundFielRect = new Rect(borderFielRect.x +100, borderFielRect.y + 3,117, 14);
+        EditorGUI.DrawRect(backgroundFielRect, backgroundColor);
+
+        borderFielRect.x += 3;
+        borderFielRect.y += 3;
+        GUI.Label(borderFielRect, "Flatten Value");
+
+        backgroundFielRect.x += 3;
+        flattenCellValueCheckboard = EditorGUI.FloatField(backgroundFielRect, flattenCellValueCheckboard, field);
+
+        Rect buttonRect = new Rect(backgroundRect.x + 20, backgroundRect.y + 100, 100, 30);
+        if (GUI.Button(buttonRect, "Cancel"))
+        {
+            skinFlattenVue = false;
+            skinFlattenAllVue = false;
+        }
+
+        buttonRect.x += 160;
+        if (GUI.Button(buttonRect, "Flatten"))
+        {
+            if (skinFlattenVue)
+                FlattenCurrentCheckboard();
+            else
+                FlattenAllCheckboard();
+            skinFlattenVue = false;
+            skinFlattenAllVue = false;
+        }
+
+    }
     #endregion
 
     #region Skin Constructor
@@ -643,6 +734,27 @@ public class GroundEditor : EditorWindow
     #endregion
 
     #region Ground
+    void FlattenCurrentCheckboard()
+    {
+        for (int y = 0; y < cellByLenghtChecker; y++)
+            for (int x = 0; x < cellByLenghtChecker; x++)
+            {
+                currentHeightGround.HeightGroundData[y].Row[x] = flattenCellValueCheckboard;
+            }
+    }
+
+    void FlattenAllCheckboard()
+    {
+        foreach(HeightGround height in height)
+        {
+            for (int y = 0; y < cellByLenghtChecker; y++)
+                for (int x = 0; x < cellByLenghtChecker; x++)
+                {
+                    height.HeightGroundData[y].Row[x] = flattenCellValueCheckboard;
+                }
+        }
+    }
+
     void CreatGround()
     {
         if (!groundFolder)
@@ -670,11 +782,15 @@ public class GroundEditor : EditorWindow
 
                 groundScript.NumberCellByLenght = cell;
                 groundScript.Density = cellDensity;
-                if (!skinLoadGround)
+                if (!skinLoadGroundVue)
                 {
                     groundScript.HeightChecker = new HeightGround();
                     height.Add(groundScript.HeightChecker);
                     groundScript.HeightChecker.InitialisationRowArray(cell);
+                }
+                else
+                {
+                    groundScript.HeightChecker = currentMapDataSave.Height[index];
                 }
 
                 groundScript.GenerateGroundBase();
@@ -692,20 +808,16 @@ public class GroundEditor : EditorWindow
         currentGround.GetComponent<GroundBaseGenerator>().GenerateGroundBase();
     }
 
-    void CleanCurrentCell()
-    {
-        currentHeightGround.CleanHeight();
-        RebuildCurrentChecker();
-        Repaint();
-    }
-
+    /// <summary>
+    /// Rebuil dand modify all checker
+    /// </summary>
     void RebuildGround()
     {
         #region Cell
         foreach (GameObject obj in checker)
         {
             GroundBaseGenerator script = obj.GetComponent<GroundBaseGenerator>();
-            script.NumberCellByLenght = cellByLenghtChecker;
+            script.NumberCellByLenght = cellByLenghtChecker +1;
             script.Density = cellDensity;
             script.HeightChecker.NewRowArray(cellByLenghtChecker);
             script.GenerateGroundBase();
@@ -717,7 +829,6 @@ public class GroundEditor : EditorWindow
 
         if (newNumberCheckerIncreaseOnTheLenght > 0)
         {
-            Debug.Log("Lenght");
             int indexCheckerOnTheLenghtPos = initCheckerOnTheLenght;//2
 
             for (int y = 0; y < initCheckerOnTheHeight; y++)
@@ -733,7 +844,7 @@ public class GroundEditor : EditorWindow
                     newChecker.name = "Extended Checker" + (indexCheckerOnTheLenghtPos + x);
 
                     GroundBaseGenerator script = newChecker.AddComponent<GroundBaseGenerator>();
-                    script.NumberCellByLenght = cellByLenghtChecker;
+                    script.NumberCellByLenght = cellByLenghtChecker +1;
                     script.Density = cellDensity;
                     script.HeightChecker = new HeightGround();
                     script.HeightChecker.InitialisationRowArray(cellByLenghtChecker);
@@ -744,7 +855,7 @@ public class GroundEditor : EditorWindow
             }
         }
 
-        else
+        else if(newNumberCheckerIncreaseOnTheLenght < 0)
         {
             int absNewNumberCheckerIncreaseOnTheLenght = Mathf.Abs(newNumberCheckerIncreaseOnTheLenght);
             int initialSizeArrayChecker = checker.Count;
@@ -770,7 +881,6 @@ public class GroundEditor : EditorWindow
 
         if (newNumberCheckerIncreaseOnTheHeight > 0)
         {
-            Debug.Log("Height");
             for (int y = 0; y < newNumberCheckerIncreaseOnTheHeight; y++)
             {
                 for (int x = 0; x < checkerOnTheLenght; x++)
@@ -782,18 +892,18 @@ public class GroundEditor : EditorWindow
                     newChecker.name = "Extended Checker" + checker.Count;
 
                     GroundBaseGenerator script = newChecker.AddComponent<GroundBaseGenerator>();
-                    script.NumberCellByLenght = cellByLenghtChecker;
+                    script.NumberCellByLenght = cellByLenghtChecker +1;
                     script.Density = cellDensity;
                     script.HeightChecker = new HeightGround();
                     script.HeightChecker.InitialisationRowArray(cellByLenghtChecker);
                     script.GenerateGroundBase();
-
+                    
                     newChecker.GetComponent<MeshRenderer>().material = CheckerMaterial;
                 }
             }
         }
 
-        else
+        else if (newNumberCheckerIncreaseOnTheHeight < 0)
         {
             int absNewNumberCheckerIncreaseOnTheHeight = Mathf.Abs(newNumberCheckerIncreaseOnTheHeight);
             for (int y = 0; y < absNewNumberCheckerIncreaseOnTheHeight; y++)
@@ -813,11 +923,27 @@ public class GroundEditor : EditorWindow
         {
             for (int x = 0; x < checkerOnTheLenght; x++)
             {
-                checker[index].transform.position = new Vector3(x * (cellByLenghtChecker - 1), 0, y * (cellByLenghtChecker - 1));
+                checker[index].transform.position = new Vector3(x * (cellByLenghtChecker), 0, y * (cellByLenghtChecker));
                 index++;
             }
         }
         #endregion
+    }
+
+    /// <summary>
+    /// Rebuild all checker with it height
+    /// </summary>
+    void RebuildAll()
+    {
+        for (int index = 0; index < checker.Count; index++)
+            checker[index].GetComponent<GroundBaseGenerator>().GenerateGroundBase();
+    }
+
+    void CleanCurrentCell()
+    {
+        currentHeightGround.CleanHeight();
+        RebuildCurrentChecker();
+        Repaint();
     }
     #endregion
 }

@@ -8,6 +8,9 @@ public class GroundBaseGenerator : MonoBehaviour
     public int Density = 1;
     public int NumberCellByLenght = 10;
 
+    public int IndexInTheCheckboard;
+
+
     private Mesh mapMesh;
 
     public void GenerateGroundBase()

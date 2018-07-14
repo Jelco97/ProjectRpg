@@ -55,7 +55,7 @@ public class GroundEditor : EditorWindow
     int initCellByLenghtChecker;
     int initCellDensity;
     MapDataSave currentMapDataSave;
-    //string pathSaveData;
+    string NameJSONFile;
 
     ///Tile vue
     GameObject currentGround;
@@ -127,7 +127,7 @@ public class GroundEditor : EditorWindow
         {
             GenericMenu toolsMenu = new GenericMenu();
             toolsMenu.AddItem(new GUIContent("New"), false, NewGroundVue);
-            toolsMenu.AddItem(new GUIContent("Load"), false, LoadGround);
+            toolsMenu.AddItem(new GUIContent("Load"), false, LoadGroundVue);
             toolsMenu.AddItem(new GUIContent("Load and creat"), false, LoadAndCreatGroundVue);
             toolsMenu.AddSeparator("");
             toolsMenu.AddItem(new GUIContent("Save"), false, SaveGround);
@@ -189,7 +189,7 @@ public class GroundEditor : EditorWindow
     {
         skinLoadGroundVue = true;
     }
-    
+
     /// <summary>
     /// Disable
     /// </summary>
@@ -201,22 +201,7 @@ public class GroundEditor : EditorWindow
 
     void SaveGround()
     {
-        //if (!currentMapDataSave)
-        //{
-        //    MapDataSave asset = ScriptableObject.CreateInstance<MapDataSave>();
-        //    currentMapDataSave = asset;
-        //    pathSaveData = AssetDatabase.GenerateUniqueAssetPath("Assets/" + nameMap + ".asset");
-        //    AssetDatabase.CreateAsset(asset, pathSaveData);
-        //}
-
-        //currentMapDataSave.NameMap = nameMap;
-        //currentMapDataSave.CheckerOnTheLenght = checkerOnTheLenght;
-        //currentMapDataSave.CheckerOnTheHeight = checkerOnTheHeight;
-        //currentMapDataSave.CellByLenghtChecker = cellByLenghtChecker;
-        //currentMapDataSave.Density = cellDensity;
-        //currentMapDataSave.GroundFolder = groundFolder;
-        //currentMapDataSave.Checker = checker;
-        if(Directory.Exists("Assets/Script/Tools/GroundEditor/Save/" + nameMap))
+        if (!Directory.Exists("Assets/Script/Tools/GroundEditor/Save/"))
         {
             Directory.CreateDirectory("Assets/Script/Tools/GroundEditor/Save/" + nameMap);
         }
@@ -230,17 +215,18 @@ public class GroundEditor : EditorWindow
         currentMapDataSave.CheckerOnTheLenght = checkerOnTheLenght;
         currentMapDataSave.CheckerOnTheHeight = checkerOnTheHeight;
         currentMapDataSave.CellByLenghtChecker = cellByLenghtChecker;
+        currentMapDataSave.Density = cellDensity;
         currentMapDataSave.Height = height;
 
-        string json = JsonUtility.ToJson(currentMapDataSave,true);
+        int index = 0;
+        foreach (GameObject obj in checker)
+        {
+            obj.GetComponent<GroundBaseGenerator>().IndexInTheCheckboard = index;
+            index++;
+        }
+
+        string json = JsonUtility.ToJson(currentMapDataSave, true);
         File.WriteAllText("Assets/Script/Tools/GroundEditor/Save/" + nameMap, json);
-        Debug.Log(json);
-
-
-        //currentMapDataSave.Height = height;
-
-        //AssetDatabase.SaveAssets();
-        //AssetDatabase.Refresh();
 
         Repaint();
     }
@@ -432,13 +418,14 @@ public class GroundEditor : EditorWindow
 
         backgroundBorderFieldRect.y += 3;
         backgroundBorderFieldRect.x += 3;
-        GUI.Label(backgroundBorderFieldRect, "Save");
+        GUI.Label(backgroundBorderFieldRect, "JSON Name");
         backgroundBorderFieldRect.y -= 3;
         backgroundBorderFieldRect.x -= 3;
 
         Rect backgroundFieldRect = new Rect(backgroundBorderFieldRect.x + 100, backgroundBorderFieldRect.y + 3, 237, 14);
         EditorGUI.DrawRect(backgroundFieldRect, backgroundColor);
-        //currentMapDataSave = (MapDataSave)EditorGUI.ObjectField(backgroundFieldRect, currentMapDataSave, typeof(MapDataSave), false);
+
+        NameJSONFile = EditorGUI.TextField(backgroundFieldRect, NameJSONFile, field);
 
         Rect buttonRect = new Rect(backgroundRect.x + 30, backgroundRect.y + 75, 100, 30);
         if (GUI.Button(buttonRect, "Cancel"))
@@ -756,16 +743,16 @@ public class GroundEditor : EditorWindow
 
                 groundScript.NumberCellByLenght = cell;
                 groundScript.Density = cellDensity;
-                //if (!skinLoadGroundVue)
-                //{
+                if (!skinLoadGroundVue)
+                {
                     groundScript.HeightChecker = new HeightGround();
                     height.Add(groundScript.HeightChecker);
-                    groundScript.HeightChecker.InitialisationRowArray(cell);
-                //}
-                //else
-                //{
-                //    groundScript.HeightChecker = currentMapDataSave.Height[index];
-                //}
+                    groundScript.HeightChecker.InitialisationRowArray(cell - 1);
+                }
+                else
+                {
+                    groundScript.HeightChecker = height[index];
+                }
 
                 groundScript.GenerateGroundBase();
 
@@ -782,22 +769,6 @@ public class GroundEditor : EditorWindow
     /// </summary>
     void RebuildAndModifyChecker()
     {
-        #region
-        if (!groundFolder)
-        {
-            groundFolder = new GameObject();
-            groundFolder.transform.position = Vector3.zero;
-            groundFolder.name = "GroundFolder";
-            checker.Clear();
-        }
-        else
-        {
-            foreach (GameObject obj in checker)
-                DestroyImmediate(obj);
-            checker.Clear();
-        }
-        #endregion
-
         #region Cell
         foreach (GameObject obj in checker)
         {
@@ -938,54 +909,53 @@ public class GroundEditor : EditorWindow
 
     void LoadGround()
     {
-        //if (currentMapDataSave && !skinLoadAndCreatGround)
-        //{
-        //    nameMap = currentMapDataSave.name;
-        //    checkerOnTheLenght = currentMapDataSave.CheckerOnTheLenght;
-        //    checkerOnTheHeight = currentMapDataSave.CheckerOnTheHeight;
-        //    cellByLenghtChecker = currentMapDataSave.CellByLenghtChecker;
-        //    cellDensity = currentMapDataSave.Density;
-        //    //groundFolder = currentMapDataSave.GroundFolder;
-        //    //checker = currentMapDataSave.Checker;
-        //
-        //    if (GameObject.Find("GroundFolder"))
-        //        groundFolder = GameObject.Find("GroundFolder");
-        //    else
-        //    {
-        //        groundFolder = new GameObject();
-        //        groundFolder.transform.position = Vector3.zero;
-        //        groundFolder.name = "GroundFolder";
-        //    }
-        //}
-        //else if (currentMapDataSave && skinLoadAndCreatGround)
-        //{
-        //    nameMap = currentMapDataSave.name;
-        //    checkerOnTheLenght = currentMapDataSave.CheckerOnTheLenght;
-        //    checkerOnTheHeight = currentMapDataSave.CheckerOnTheHeight;
-        //    cellByLenghtChecker = currentMapDataSave.CellByLenghtChecker;
-        //    cellDensity = currentMapDataSave.Density;
-        //    //groundFolder 
-        //    //checker = currentMapDataSave.Checker;
-        //
-        //    if (GameObject.Find("GroundFolder"))
-        //        groundFolder = GameObject.Find("GroundFolder");
-        //    else
-        //    {
-        //        groundFolder = new GameObject();
-        //        groundFolder.transform.position = Vector3.zero;
-        //        groundFolder.name = "GroundFolder";
-        //    }
-        //
-        //    CreatGround();
-        //}
-        //
-        //if (currentMapDataSave)
-        //{
-        //    groundCreat = true;
-        //    skinCheckerVue = true;
-        //    skinLoadGroundVue = false;
-        //    skinLoadAndCreatGround = false;
-        //}
+        if (!File.Exists("Assets/Script/Tools/GroundEditor/Save/" + NameJSONFile))
+        {
+            Debug.Log("File didn't exist !");
+            return;
+        }
+        currentMapDataSave = (MapDataSave)JsonUtility.FromJson(File.ReadAllText("Assets/Script/Tools/GroundEditor/Save/" + NameJSONFile), typeof(MapDataSave));
+
+        if (GameObject.Find("GroundFolder"))
+            groundFolder = GameObject.Find("GroundFolder");
+        else
+        {
+            groundFolder = new GameObject();
+            groundFolder.transform.position = Vector3.zero;
+            groundFolder.name = "GroundFolder";
+        }
+
+        nameMap = currentMapDataSave.NameMap;
+        checkerOnTheLenght = currentMapDataSave.CheckerOnTheLenght;
+        checkerOnTheHeight = currentMapDataSave.CheckerOnTheHeight;
+        cellByLenghtChecker = currentMapDataSave.CellByLenghtChecker;
+        cellDensity = currentMapDataSave.Density;
+        height = currentMapDataSave.Height;
+
+        if (!skinLoadAndCreatGround)
+        {
+            GameObject[] initialisator = new GameObject[checkerOnTheHeight * checkerOnTheLenght];
+            foreach (Transform child in groundFolder.transform)
+            {
+                if (child.GetComponent<GroundBaseGenerator>())
+                {
+                    int i = child.GetComponent<GroundBaseGenerator>().IndexInTheCheckboard;
+                    initialisator[i] = child.gameObject;
+                }
+            }
+            checker = new List<GameObject>(initialisator);
+        }
+
+        if (skinLoadAndCreatGround)
+        {
+            CreatGround();
+        }
+
+        groundCreat = true;
+        skinCheckerVue = true;
+        skinLoadGroundVue = false;
+        skinLoadAndCreatGround = false;
+
     }
     #endregion
 }

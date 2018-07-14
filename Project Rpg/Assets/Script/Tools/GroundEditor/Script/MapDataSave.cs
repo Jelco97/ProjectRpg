@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-//[CreateAssetMenu(fileName = "Save", menuName = "MapDataSave")][SerializeField]
+//[CreateAssetMenu(fileName = "Save", menuName = "MapDataSave")]
+[SerializeField]
 public class MapDataSave //: ScriptableObject 
 {
     public string NameMap;
@@ -10,7 +11,5 @@ public class MapDataSave //: ScriptableObject
     public int CheckerOnTheHeight;
     public int CellByLenghtChecker;
     public int Density;
-    //public GameObject GroundFolder;
-    //public List<GameObject> Checker;
     public List<HeightGround> Height;
 }

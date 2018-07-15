@@ -377,6 +377,7 @@ public class GroundEditor : EditorWindow
         {
             if (GUI.Button(validationButtonRect, "Cancel"))
                 skinNewGroundVue = false;
+
             validationButtonRect.x += 290;
             if (GUI.Button(validationButtonRect, "Creat"))
             {
@@ -761,6 +762,8 @@ public class GroundEditor : EditorWindow
                 index++;
             }
 
+        CalculateHeightBorder();
+
         groundCreat = true;
     }
 
@@ -804,7 +807,7 @@ public class GroundEditor : EditorWindow
                     script.Density = cellDensity;
                     script.HeightChecker = new HeightGround();
                     script.HeightChecker.InitialisationRowArray(cellByLenghtChecker);
-                    script.GenerateGroundBase();
+                    //script.GenerateGroundBase();
 
                     newChecker.GetComponent<MeshRenderer>().material = CheckerMaterial;
                 }
@@ -852,7 +855,7 @@ public class GroundEditor : EditorWindow
                     script.Density = cellDensity;
                     script.HeightChecker = new HeightGround();
                     script.HeightChecker.InitialisationRowArray(cellByLenghtChecker);
-                    script.GenerateGroundBase();
+                    //script.GenerateGroundBase();
 
                     newChecker.GetComponent<MeshRenderer>().material = CheckerMaterial;
                 }
@@ -871,6 +874,10 @@ public class GroundEditor : EditorWindow
                 }
             }
         }
+
+        CalculateHeightBorder();
+
+        RebuildAllGround();
         #endregion
 
         #region Placement
@@ -884,6 +891,42 @@ public class GroundEditor : EditorWindow
             }
         }
         #endregion
+    }
+
+    void CalculateHeightBorder()
+    {
+        int index = 0;
+        for (int y = 0; y < checkerOnTheHeight; y++)
+        {
+            for (int x = 0; x < checkerOnTheLenght; x++)
+            {
+                GroundBaseGenerator ground = checker[index].GetComponent<GroundBaseGenerator>();
+
+                if (y != 0)
+                {
+                    if (index + 1 < (checkerOnTheLenght * y))//3
+                    {
+                        ground.RightChecker = true;
+                        ground.RightHeight = checker[index + 1].GetComponent<GroundBaseGenerator>().HeightChecker;
+                    }
+                }
+                else
+                {
+                    if (index + 1 < checkerOnTheLenght)
+                    {
+                        ground.RightChecker = true;
+                        ground.RightHeight = checker[index + 1].GetComponent<GroundBaseGenerator>().HeightChecker;
+                    }
+                }
+
+                if (index + checkerOnTheLenght < checker.Count)
+                {
+                    ground.TopChecker = true;
+                    ground.TopHeight = checker[index + checkerOnTheLenght].GetComponent<GroundBaseGenerator>().HeightChecker;
+                }
+                index++;
+            }
+        }
     }
 
     void RebuildCurrentChecker()

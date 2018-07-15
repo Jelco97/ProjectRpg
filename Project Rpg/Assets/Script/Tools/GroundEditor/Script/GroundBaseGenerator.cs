@@ -10,6 +10,12 @@ public class GroundBaseGenerator : MonoBehaviour
 
     public int IndexInTheCheckboard;
 
+    public bool TopChecker;
+    private bool topChecker;
+    public HeightGround TopHeight;
+    public bool RightChecker;
+    private bool rightChecker;
+    public HeightGround RightHeight;
 
     private Mesh mapMesh;
 
@@ -40,13 +46,33 @@ public class GroundBaseGenerator : MonoBehaviour
 
                 int Xindex = Mathf.FloorToInt(xPos / Density);
                 if (Xindex == NumberCellByLenght -1)
+                {
+                    if (RightChecker)
+                        rightChecker = true;
                     Xindex--;
+                }
 
                 int Zindex = Mathf.FloorToInt(zPos / Density);
                 if (Zindex == NumberCellByLenght -1)
+                {
+                    if (TopChecker)
+                        topChecker = true;
                     Zindex--;
+                }
 
-                float height = HeightChecker.HeightGroundData[Zindex].Row[Xindex];
+                float height = 0;
+                if (!topChecker && !rightChecker)
+                    height = HeightChecker.HeightGroundData[Zindex].Row[Xindex];
+
+                else if (topChecker)
+                    height = TopHeight.HeightGroundData[0].Row[Xindex];
+
+                else if (rightChecker)
+                    height = RightHeight.HeightGroundData[Zindex].Row[0];
+
+                topChecker = false;
+                rightChecker = false;
+
                 positionVertex.y = height;
                 
                 vertexColor[index] = VertexColorByHeight(height);

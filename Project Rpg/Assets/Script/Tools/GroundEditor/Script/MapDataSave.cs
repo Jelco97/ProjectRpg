@@ -11,5 +11,10 @@ public class MapDataSave //: ScriptableObject
     public int CheckerOnTheHeight;
     public int CellByLenghtChecker;
     public int Density;
+
+    public float vertexColorRedValue;
+    public float vertexColorGreenValue;
+    public float vertexColorBlueValue;
+
     public List<HeightGround> Height;
 }

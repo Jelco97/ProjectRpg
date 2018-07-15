@@ -5,7 +5,7 @@ MonoImporter:
   serializedVersion: 2
   defaultReferences:
   - m_PersistentViewDataDictionary: {instanceID: 0}
-  - CheckerMaterial: {fileID: 2100000, guid: be5fc09492985c1419e56b3deffd930c, type: 2}
+  - CheckerMaterial: {fileID: 2100000, guid: 91af8bee2d561b14b8005732a55c4930, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

@@ -36,6 +36,8 @@ public class GroundEditor : EditorWindow
     private bool skinLoadAndCreatGround;
     private bool skinFlattenVue;
     private bool skinFlattenAllVue;
+    private bool skinVertexColorVue;
+    private bool repaint;
 
     ///New Ground
     string nameMap = "New Map";
@@ -47,14 +49,14 @@ public class GroundEditor : EditorWindow
     ///Save
     GameObject groundFolder;
     List<GameObject> checker = new List<GameObject>();
+    List<HeightGround> height = new List<HeightGround>();//Only use for load and creat 
     HeightGround currentHeightGround;
-    List<HeightGround> height = new List<HeightGround>();
+    MapDataSave currentMapDataSave;
     string initNameMap;
     int initCheckerOnTheLenght;
     int initCheckerOnTheHeight;
     int initCellByLenghtChecker;
     int initCellDensity;
-    MapDataSave currentMapDataSave;
     string NameJSONFile;
 
     ///Tile vue
@@ -66,6 +68,11 @@ public class GroundEditor : EditorWindow
 
     /// Cell
     float flattenCellValueCheckboard;
+
+    ///Vertex Color
+    float vertexColorRedValue = 0;
+    float vertexColorGreenValue = 2;
+    float vertexColorBlueValue = 4;
 
     #endregion
 
@@ -107,6 +114,9 @@ public class GroundEditor : EditorWindow
         else if (skinLoadGroundVue)
             LoadGroundEditor();
 
+        else if (skinVertexColorVue)
+            VertexColorEditor();
+
         else if (skinFlattenVue || skinFlattenAllVue)
             FlattenEditor();
 
@@ -116,7 +126,11 @@ public class GroundEditor : EditorWindow
         else if (skinCellVue)
             CellEditor();
 
-
+        if (repaint)
+        {
+            repaint = false;
+            Repaint();
+        }
     }
 
     #region Tool Bar
@@ -164,7 +178,7 @@ public class GroundEditor : EditorWindow
             GenericMenu toolsMenu = new GenericMenu();
             toolsMenu.AddItem(new GUIContent("Clean"), false, CleanCurrentCell);
             toolsMenu.AddSeparator("");
-            toolsMenu.AddItem(new GUIContent("Flatten"), false, FlattenVueEditor);
+            toolsMenu.AddItem(new GUIContent("Flatten"), false, FlattenVue);
 
             Rect dropDownRect = new Rect(123, 3, 0, 16);
             toolsMenu.DropDown(dropDownRect);
@@ -172,6 +186,18 @@ public class GroundEditor : EditorWindow
             EditorGUIUtility.ExitGUI();
         }
         EditorGUI.EndDisabledGroup();
+
+        buttonRect.x += 50;
+        if (GUI.Button(buttonRect, "Mesh", EditorStyles.toolbarDropDown))
+        {
+            GenericMenu toolsMenu = new GenericMenu();
+            toolsMenu.AddItem(new GUIContent("Vertex Color"), false, VertexColorVue);
+
+            Rect dropDownRect = new Rect(173, 3, 0, 16);
+            toolsMenu.DropDown(dropDownRect);
+
+            EditorGUIUtility.ExitGUI();
+        }
         EditorGUI.EndDisabledGroup();
     }
 
@@ -180,6 +206,7 @@ public class GroundEditor : EditorWindow
     {
         skinNewGroundVue = true;
         skinDataGroundVue = false;
+        repaint = true;
     }
 
     /// <summary>
@@ -188,6 +215,7 @@ public class GroundEditor : EditorWindow
     void LoadGroundVue()
     {
         skinLoadGroundVue = true;
+        repaint = true;
     }
 
     /// <summary>
@@ -197,6 +225,7 @@ public class GroundEditor : EditorWindow
     {
         skinLoadAndCreatGround = true;
         skinLoadGroundVue = true;
+        repaint = true;
     }
 
     void SaveGround()
@@ -217,6 +246,10 @@ public class GroundEditor : EditorWindow
         currentMapDataSave.CellByLenghtChecker = cellByLenghtChecker;
         currentMapDataSave.Density = cellDensity;
         currentMapDataSave.Height = height;
+        currentMapDataSave.vertexColorRedValue = vertexColorRedValue;
+        currentMapDataSave.vertexColorGreenValue = vertexColorGreenValue;
+        currentMapDataSave.vertexColorBlueValue = vertexColorBlueValue;
+
 
         int index = 0;
         foreach (GameObject obj in checker)
@@ -244,6 +277,7 @@ public class GroundEditor : EditorWindow
         skinFlattenVue = false;
         skinFlattenAllVue = false;
         skinDataGroundVue = true;
+        repaint = true;
     }
 
     void CancelGroundDataVue()
@@ -255,20 +289,31 @@ public class GroundEditor : EditorWindow
         cellDensity = initCellDensity;
 
         skinDataGroundVue = false;
+        repaint = true;
     }
 
     void FlattenAllCellVue()
     {
         skinFlattenVue = false;
         skinFlattenAllVue = true;
+        repaint = true;
     }
 
     #endregion
 
     #region cell
-    void FlattenVueEditor()
+    void FlattenVue()
     {
         skinFlattenVue = true;
+        repaint = true;
+    }
+    #endregion
+
+    #region
+    void VertexColorVue()
+    {
+        skinVertexColorVue = true;
+        repaint = true;
     }
     #endregion
 
@@ -419,19 +464,27 @@ public class GroundEditor : EditorWindow
 
         backgroundBorderFieldRect.y += 3;
         backgroundBorderFieldRect.x += 3;
-        GUI.Label(backgroundBorderFieldRect, "JSON Name");
+        if (skinLoadAndCreatGround)
+            GUI.Label(backgroundBorderFieldRect, "JSON Name");
+        else
+            GUI.Label(backgroundBorderFieldRect, "Ground folder");
         backgroundBorderFieldRect.y -= 3;
         backgroundBorderFieldRect.x -= 3;
 
         Rect backgroundFieldRect = new Rect(backgroundBorderFieldRect.x + 100, backgroundBorderFieldRect.y + 3, 237, 14);
         EditorGUI.DrawRect(backgroundFieldRect, backgroundColor);
 
-        NameJSONFile = EditorGUI.TextField(backgroundFieldRect, NameJSONFile, field);
+        if (skinLoadAndCreatGround)
+            NameJSONFile = EditorGUI.TextField(backgroundFieldRect, NameJSONFile, field);
+        else
+            groundFolder = (GameObject)EditorGUI.ObjectField(backgroundFieldRect, groundFolder, typeof(GameObject), true);
+
 
         Rect buttonRect = new Rect(backgroundRect.x + 30, backgroundRect.y + 75, 100, 30);
         if (GUI.Button(buttonRect, "Cancel"))
         {
             skinLoadGroundVue = false;
+            skinLoadAndCreatGround = false;
         }
 
         buttonRect.x += 240;
@@ -550,7 +603,6 @@ public class GroundEditor : EditorWindow
                                 mouseClicked = true;
                                 valueChoice = true;
                                 paintValue = currentHeightGround.HeightGroundData[Mathf.Abs(y - cellByLenghtChecker)].Row[x];
-                                Debug.Log(paintValue);
                             }
                             else if (valueChoice && !cellPaint.Contains(new Vector2(y, x)))
                             {
@@ -622,6 +674,81 @@ public class GroundEditor : EditorWindow
         }
 
     }
+
+    void VertexColorEditor()
+    {
+        Rect borderBackgroundRect = new Rect(MidlePos(new Vector2(356, 206)), new Vector2(356, 206));/////
+        EditorGUI.DrawRect(borderBackgroundRect, borderColor);
+
+        Rect backgroundRect = new Rect(MidlePos(new Vector2(350, 200)), new Vector2(350, 200));/////
+        EditorGUI.DrawRect(backgroundRect, backgroundColor);
+
+        Rect subtitleRect = new Rect(backgroundRect.x + 10, backgroundRect.y + 10, 330, 20);/////
+        GUI.Label(subtitleRect, "Vertex Color Editor", subtitle);
+
+        #region Field
+        Rect backgroundBorderFieldRect = new Rect(subtitleRect.x + 10, subtitleRect.y + 30, 310, 20);/////
+        EditorGUI.DrawRect(backgroundBorderFieldRect, borderColor);
+
+        Rect backgroundFieldRect = new Rect(backgroundBorderFieldRect.x + 150, backgroundBorderFieldRect.y + 3, 157, 14);
+        EditorGUI.DrawRect(backgroundFieldRect, backgroundColor);
+
+        backgroundBorderFieldRect = Displacementfield(backgroundBorderFieldRect, true);
+        GUI.Label(backgroundBorderFieldRect, "Red Color", field);
+        backgroundBorderFieldRect = Displacementfield(backgroundBorderFieldRect, false);
+
+        backgroundFieldRect.x += 3;
+        vertexColorRedValue = EditorGUI.FloatField(backgroundFieldRect, vertexColorRedValue, field);
+        backgroundFieldRect.x -= 3;
+
+        ///
+
+        backgroundBorderFieldRect.y += 30;
+        EditorGUI.DrawRect(backgroundBorderFieldRect, borderColor);
+
+        backgroundFieldRect.y += 30;
+        EditorGUI.DrawRect(backgroundFieldRect, backgroundColor);
+
+        backgroundBorderFieldRect = Displacementfield(backgroundBorderFieldRect, true);
+        GUI.Label(backgroundBorderFieldRect, "Green Color", field);
+        backgroundBorderFieldRect = Displacementfield(backgroundBorderFieldRect, false);
+
+        backgroundFieldRect.x += 3;
+        vertexColorGreenValue = EditorGUI.FloatField(backgroundFieldRect, vertexColorGreenValue, field);
+        backgroundFieldRect.x -= 3;
+
+        ///
+
+        backgroundBorderFieldRect.y += 30;
+        EditorGUI.DrawRect(backgroundBorderFieldRect, borderColor);
+
+        backgroundFieldRect.y += 30;
+        EditorGUI.DrawRect(backgroundFieldRect, backgroundColor);
+
+        backgroundBorderFieldRect = Displacementfield(backgroundBorderFieldRect, true);
+        GUI.Label(backgroundBorderFieldRect, "Blue Color", field);
+        backgroundBorderFieldRect = Displacementfield(backgroundBorderFieldRect, false);
+
+        backgroundFieldRect.x += 3;
+        vertexColorBlueValue = EditorGUI.FloatField(backgroundFieldRect, vertexColorBlueValue, field);
+        backgroundFieldRect.x -= 3;
+        #endregion
+
+        #region Button
+        Rect buttonRect = new Rect(backgroundRect.x + 20, backgroundRect.y + backgroundRect.size.y - 50, 100, 30);
+        if (GUI.Button(buttonRect, "Cancel"))
+        {
+            skinVertexColorVue = false;
+        }
+
+        buttonRect.x += 210;
+        if (GUI.Button(buttonRect, "Apply"))
+        {
+            ApplyVertexColor();
+            skinVertexColorVue = false;
+        }
+        #endregion
+    }
     #endregion
 
     #region Skin Constructor
@@ -692,6 +819,28 @@ public class GroundEditor : EditorWindow
 
         return new Rect(xPos, yPos, NewXSize, NewYSize);
     }
+
+    /// <summary>
+    /// Move Of 3 pixels in right or left
+    /// </summary>
+    /// <param name="Current">Current Rect</param>
+    /// <param name="Dirrection">True = move right</param>
+    /// <returns></returns>
+    Rect Displacementfield(Rect Current, bool Dirrection)
+    {
+        if (Dirrection)
+        {
+            Current.x += 3;
+            Current.y += 3;
+        }
+        else
+        {
+            Current.x -= 3;
+            Current.y -= 3;
+        }
+
+        return Current;
+    }
     #endregion
 
     #region Ground
@@ -756,13 +905,16 @@ public class GroundEditor : EditorWindow
                 }
 
                 groundScript.GenerateGroundBase();
+                groundScript.IndexInTheCheckboard = index;
 
                 checker[index].transform.position = new Vector3(x * cellByLenghtChecker, 0, y * cellByLenghtChecker);
                 checker[index].GetComponent<MeshRenderer>().material = CheckerMaterial;
                 index++;
             }
 
+
         CalculateHeightBorder();
+        ApplyVertexColor();
 
         groundCreat = true;
     }
@@ -904,7 +1056,7 @@ public class GroundEditor : EditorWindow
 
                 if (y != 0)
                 {
-                    if (index + 1 < (checkerOnTheLenght * y))//3
+                    if (index < (checkerOnTheLenght * (y + 1)) - 1)//3
                     {
                         ground.RightChecker = true;
                         ground.RightHeight = checker[index + 1].GetComponent<GroundBaseGenerator>().HeightChecker;
@@ -952,30 +1104,34 @@ public class GroundEditor : EditorWindow
 
     void LoadGround()
     {
-        if (!File.Exists("Assets/Script/Tools/GroundEditor/Save/" + NameJSONFile))
+        if (skinLoadAndCreatGround)
         {
-            Debug.Log("File didn't exist !");
-            return;
-        }
-        currentMapDataSave = (MapDataSave)JsonUtility.FromJson(File.ReadAllText("Assets/Script/Tools/GroundEditor/Save/" + NameJSONFile), typeof(MapDataSave));
+            if (!File.Exists("Assets/Script/Tools/GroundEditor/Save/" + NameJSONFile))
+            {
+                Debug.Log("File didn't exist !");
+                return;
+            }
+            currentMapDataSave = (MapDataSave)JsonUtility.FromJson(File.ReadAllText("Assets/Script/Tools/GroundEditor/Save/" + NameJSONFile), typeof(MapDataSave));
 
-        if (GameObject.Find("GroundFolder"))
-            groundFolder = GameObject.Find("GroundFolder");
-        else
-        {
             groundFolder = new GameObject();
             groundFolder.transform.position = Vector3.zero;
             groundFolder.name = "GroundFolder";
+
+            vertexColorRedValue = currentMapDataSave.vertexColorRedValue;
+            vertexColorGreenValue = currentMapDataSave.vertexColorGreenValue;
+            vertexColorBlueValue = currentMapDataSave.vertexColorBlueValue;
+
+            nameMap = currentMapDataSave.NameMap;
+            checkerOnTheLenght = currentMapDataSave.CheckerOnTheLenght;
+            checkerOnTheHeight = currentMapDataSave.CheckerOnTheHeight;
+            cellByLenghtChecker = currentMapDataSave.CellByLenghtChecker;
+            cellDensity = currentMapDataSave.Density;
+            height = currentMapDataSave.Height;
+
+            CreatGround();
         }
 
-        nameMap = currentMapDataSave.NameMap;
-        checkerOnTheLenght = currentMapDataSave.CheckerOnTheLenght;
-        checkerOnTheHeight = currentMapDataSave.CheckerOnTheHeight;
-        cellByLenghtChecker = currentMapDataSave.CellByLenghtChecker;
-        cellDensity = currentMapDataSave.Density;
-        height = currentMapDataSave.Height;
-
-        if (!skinLoadAndCreatGround)
+        else
         {
             GameObject[] initialisator = new GameObject[checkerOnTheHeight * checkerOnTheLenght];
             foreach (Transform child in groundFolder.transform)
@@ -987,18 +1143,45 @@ public class GroundEditor : EditorWindow
                 }
             }
             checker = new List<GameObject>(initialisator);
-        }
 
-        if (skinLoadAndCreatGround)
-        {
-            CreatGround();
+            vertexColorRedValue = checker[0].GetComponent<GroundBaseGenerator>().RedColorByHeight;
+            vertexColorGreenValue = checker[0].GetComponent<GroundBaseGenerator>().GreenColorByHeight;
+            vertexColorBlueValue = checker[0].GetComponent<GroundBaseGenerator>().BlueColorByHeight;
+
+            cellByLenghtChecker = checker[0].GetComponent<GroundBaseGenerator>().NumberCellByLenght - 1;
+            cellDensity = checker[0].GetComponent<GroundBaseGenerator>().Density;
+            checkerOnTheLenght = 0;
+            checkerOnTheHeight = 0;
+
+            for (int index = 0; index < checker.Count; index++)
+            {
+                if (checker[index].transform.position.z != 0)
+                {
+                    checkerOnTheLenght = index;
+                    break;
+                }
+            }
+
+            Debug.Log(checker.Count + " / " + checkerOnTheLenght + " = " + checker.Count / checkerOnTheLenght);
+            checkerOnTheHeight = checker.Count / checkerOnTheLenght;
         }
 
         groundCreat = true;
         skinCheckerVue = true;
         skinLoadGroundVue = false;
         skinLoadAndCreatGround = false;
+    }
 
+    void ApplyVertexColor()
+    {
+        foreach (GameObject obj in checker)
+        {
+            GroundBaseGenerator ground = obj.GetComponent<GroundBaseGenerator>();
+            ground.RedColorByHeight = vertexColorRedValue;
+            ground.GreenColorByHeight = vertexColorGreenValue;
+            ground.BlueColorByHeight = vertexColorBlueValue;
+            ground.GenerateGroundBase();
+        }
     }
     #endregion
 }

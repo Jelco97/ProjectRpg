@@ -7,16 +7,19 @@ public class GroundBaseGenerator : MonoBehaviour
     public HeightGround HeightChecker;
     public int Density = 1;
     public int NumberCellByLenght = 10;
-
     public int IndexInTheCheckboard;
 
     public bool TopChecker;
-    private bool topChecker;
-    public HeightGround TopHeight;
     public bool RightChecker;
-    private bool rightChecker;
+    public HeightGround TopHeight;
     public HeightGround RightHeight;
 
+    public float RedColorByHeight;
+    public float GreenColorByHeight;
+    public float BlueColorByHeight;
+
+    private bool topChecker;
+    private bool rightChecker;
     private Mesh mapMesh;
 
     public void GenerateGroundBase()
@@ -45,7 +48,7 @@ public class GroundBaseGenerator : MonoBehaviour
                 positionVertex.x = (xPos / Density);
 
                 int Xindex = Mathf.FloorToInt(xPos / Density);
-                if (Xindex == NumberCellByLenght -1)
+                if (Xindex == NumberCellByLenght - 1)
                 {
                     if (RightChecker)
                         rightChecker = true;
@@ -53,7 +56,7 @@ public class GroundBaseGenerator : MonoBehaviour
                 }
 
                 int Zindex = Mathf.FloorToInt(zPos / Density);
-                if (Zindex == NumberCellByLenght -1)
+                if (Zindex == NumberCellByLenght - 1)
                 {
                     if (TopChecker)
                         topChecker = true;
@@ -74,9 +77,9 @@ public class GroundBaseGenerator : MonoBehaviour
                 rightChecker = false;
 
                 positionVertex.y = height;
-                
+
                 vertexColor[index] = VertexColorByHeight(height);
-                uv[index] = new Vector2(xPos / (numSideQuad + 1), zPos / (numSideQuad + 1));  
+                uv[index] = new Vector2(xPos / (numSideQuad + 1), zPos / (numSideQuad + 1));
                 vertices[index++] = positionVertex;
             }
 
@@ -125,21 +128,18 @@ public class GroundBaseGenerator : MonoBehaviour
         HeightChecker.CleanHeight();
     }
 
+    /// <summary>
+    /// Return Color if height is behind Value
+    /// </summary>
+    /// <param name="Height"></param>
+    /// <returns></returns>
     public Color VertexColorByHeight(float Height)
     {
-        if (Height == -3f)
-            return Color.white;
-        else if (Height == -2)
-            return Color.blue;
-        else if (Height == -1f)
-            return Color.yellow;
-        else if (Height == 0)
-            return Color.green;
-        else if (Height == 1f)
+        if (Height <= RedColorByHeight)
             return Color.red;
-        else if (Height == 2)
-            return Color.black;
+        else if (Height <= GreenColorByHeight)
+            return Color.green;
         else
-            return Color.magenta;
+            return Color.blue;
     }
 }

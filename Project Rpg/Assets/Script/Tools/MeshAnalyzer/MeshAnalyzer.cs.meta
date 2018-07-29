@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d15a4e1d6bb3acd4c98f5f51290c7a0f
+timeCreated: 1518438617
+licenseType: Free
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - GrassMat: {fileID: 2100000, guid: 648093f32a797664880c8b2c900d491e, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

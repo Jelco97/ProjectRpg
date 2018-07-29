@@ -5,7 +5,7 @@ using UnityEditor;
 
 public class MergeMesh : Editor
 {
-    [MenuItem("GameObject/Merge %#g",false,10),ContextMenu("Merge")]
+    [MenuItem("CustomTools/Merge %#g",false,10),ContextMenu("Merge")]
     static void MergeMeshFunction()
     {
         #region Initialisation
